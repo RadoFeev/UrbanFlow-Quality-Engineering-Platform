@@ -4,7 +4,7 @@
 
 **Status date:** 2026-08-24
 
-**Current milestone:** Phases 1-5 implemented; Phase 6 in progress
+**Current milestone:** Phases 1-6 implemented; Phase 7 in progress
 
 ## Implemented modules
 
@@ -15,11 +15,23 @@ The Maven reactor and parent relationships are implemented for:
 - `test-core`, `test-data`, `test-orchestrator`.
 - UI, API, contract, component, integration, event, database, end-to-end, accessibility, visual, performance, and security suites.
 
-The API, component, integration, database, consumer-contract, and UI suites are fully implemented.
-API, component, contract, and UI suites are locally verified; the PostgreSQL suites compile and
-discover all tests but require a Docker runtime to execute. Later event, E2E, and non-functional suites
-still establish their executable build boundaries only. No placeholder classes or empty tests have
-been added.
+The API, component, integration, database, consumer-contract, UI, event, and E2E suites are fully
+implemented. Local and browser-backed suites are verified; PostgreSQL, Kafka broker, and deployed
+journey checks compile and discover all tests but require their documented external runtime to
+execute. No placeholder classes or empty tests have been added.
+
+## Phase 6 distributed-flow suites
+
+- 47 local Kafka checks validate eleven event types, envelopes, headers, topic ownership, payloads,
+  schema rejection, ordering, idempotency, retry, dead-letter handling, delay, and consumer restart.
+- One additional Testcontainers check performs an actual keyed Kafka publish/consume round trip when
+  Docker is available and is explicitly reported as skipped when it is not.
+- 20 independent black-box E2E journeys register and authenticate unique customers, create and replay
+  idempotent shipments, read the protected aggregate, and verify the public tracking projection.
+- Every E2E assertion operates on actual HTTP responses and covers security headers, trace and
+  correlation propagation, optimistic versions, idempotency, tracking, and customer isolation.
+- Deployed E2E execution is opt-in through `e2e.enabled=true` and explicit identity and shipment
+  service URLs so a developer build never reports simulated integration as a pass.
 
 ## Phase 5 browser suite
 
@@ -164,9 +176,9 @@ The application layer currently implements:
 | Component | 28 | 25 |
 | Integration | 25 implemented; Docker-blocked locally | 25 |
 | Contract | 20 | 20 |
-| Event/Kafka | 0 | 30 |
+| Event/Kafka | 48 implemented; 47 local + 1 Docker-backed | 30 |
 | Database | 29 implemented; Docker-blocked locally | 20 |
-| End-to-end | 0 | 20 |
+| End-to-end | 20 implemented; deployed-stack opt-in | 20 |
 | Accessibility | 0 | 15 |
 | Visual | 0 | 15 |
 | Performance scenarios | 0 | 10 |
@@ -250,19 +262,23 @@ tests are not used to inflate the inventory.
 | Phase 5 Edge smoke | Passed: authenticated customer journey |
 | Phase 5 Firefox smoke | Passed: authenticated customer journey |
 | Phase 5 quality profile | Passed: Spotless clean, Checkstyle 0 violations, SpotBugs 0 findings |
+| Phase 6 event suite | Passed: 47 executed, 1 Docker-aware skip, 0 failures/errors |
+| Phase 6 E2E discovery | Passed: 20 deployed journeys discovered and explicitly skipped locally |
+| Phase 6 quality profile | Passed: Spotless clean, Checkstyle 0 violations, SpotBugs 0 findings |
 | Portal JavaScript syntax after UI hardening | Passed: all three application scripts |
 | Docker Compose validation | Not runnable: Docker is not installed |
 | Kubernetes/Helm validation | Not runnable: kubectl and Helm are not installed |
 
 ## Known limitations
 
-- Portal flows currently use isolated browser storage; service-backed gateway integration is still required before distributed end-to-end execution.
+- Portal UI tests use deterministic browser storage; the separate Phase 6 E2E suite exercises the
+  real identity and shipment HTTP boundaries against an explicitly supplied deployed environment.
 - The 29 database and 25 Spring Boot integration tests are ready but cannot execute on this machine
   until a Docker-compatible runtime is available.
-- Kafka broker delivery, lease recovery, and PostgreSQL `SKIP LOCKED` behavior are unit-tested but not yet verified against real containers because Docker is unavailable.
+- Kafka broker round-trip and PostgreSQL `SKIP LOCKED` checks are implemented but cannot execute on
+  this machine because Docker is unavailable.
 - Concurrent first-use races for the same idempotency key require the planned PostgreSQL integration test and conflict-normalization hardening.
-- Black-box tracking behavior still needs container-backed Kafka/PostgreSQL/Redis coverage; the
-  reusable framework is complete and the dedicated Phase 4 behavior suites are next.
+- Black-box tracking is covered by deployed E2E journeys; a complete local stack still needs Docker.
 - Routing HTTP endpoints still require the planned shared bearer authorization adapter before portal integration; current route-domain and event boundaries are implemented and tested.
 - Docker, CI workflows, Kubernetes, Helm, and dashboards are scheduled for Milestone 8.
 - The checked machine requires the portable JDK used during validation or a separately installed JDK 25.
@@ -270,8 +286,7 @@ tests are not used to inflate the inventory.
 
 ## Next milestone
 
-Phase 6 implements Kafka event validation and distributed end-to-end business flows with schema,
-ordering, idempotency, retry, dead-letter, trace, and eventual-consistency assertions.
+Phase 7 implements executable accessibility, visual-regression, performance, and security suites.
 
 ## Exact commands
 
@@ -296,6 +311,9 @@ With JDK 25 on `JAVA_HOME`:
 .\mvnw.cmd -pl :ui-tests -am -Dgroups=ui -Dui.parallelism=4 test
 .\mvnw.cmd -pl :ui-tests -am -Dgroups=ui -Dbrowser=edge test
 .\mvnw.cmd -pl :ui-tests -am -Dgroups=ui -Dbrowser=firefox test
+.\mvnw.cmd -pl :event-tests -am -Dgroups=event test
+.\mvnw.cmd -pl :e2e-tests -am -Dgroups=e2e test
+.\mvnw.cmd -pl :e2e-tests -am -Dgroups=e2e -De2e.enabled=true test
 ```
 
 Portable validation toolchain used on this machine:
