@@ -1,0 +1,36 @@
+spring:
+  application:
+    name: warehouse-service
+  datasource:
+    url: ${WAREHOUSE_DATABASE_URL:jdbc:postgresql://localhost:5432/urbanflow_warehouse}
+    username: ${WAREHOUSE_DATABASE_USER}
+    password: ${WAREHOUSE_DATABASE_PASSWORD}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: false
+
+server:
+  port: ${WAREHOUSE_SERVICE_PORT:8086}
+  shutdown: graceful
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+logging:
+  pattern:
+    console: >-
+      %d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} level=%level service=warehouse-service
+      correlationId=%X{correlationId:-none} traceId=%X{traceId:-none} logger=%logger{36} message=%msg%n

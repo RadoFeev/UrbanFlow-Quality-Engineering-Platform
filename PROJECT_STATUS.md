@@ -15,7 +15,7 @@ The Maven reactor and parent relationships are implemented for:
 - `test-core`, `test-data`, `test-orchestrator`.
 - UI, API, contract, component, integration, event, database, end-to-end, accessibility, visual, performance, and security suites.
 
-Most test modules currently establish the executable build boundary only. `identity-service`, `shipment-service`, `tracking-service`, `routing-service`, and `notification-service` now contain independently executable Phase 2 vertical slices; no placeholder classes or empty tests have been added.
+Most test modules currently establish the executable build boundary only. All six services now contain independently executable Phase 2 vertical slices; no placeholder classes or empty tests have been added.
 
 ## Phase 2 progress
 
@@ -70,6 +70,15 @@ The notification service currently implements:
 - Capped exponential retry, terminal dead-letter state, local overlap suppression, and delivery metrics.
 - Health/Prometheus endpoints, executable Spring Boot packaging, and a linted OpenAPI 3.1 contract.
 
+The warehouse service currently implements:
+
+- Capacity-controlled warehouses and warehouse-owned logistics hubs with stable UUID identifiers.
+- Search, sorting, pagination, and no-store operational read models.
+- Version-preconditioned warehouse, hub, incident, and feature-flag commands using strong entity tags.
+- Problem-delivery incidents with an explicit open/resolved lifecycle.
+- Transactional append-only audit records for every state-changing operation.
+- PostgreSQL constraints and indexes, Flyway migration, health/Prometheus endpoints, and OpenAPI 3.1 contract.
+
 ## Completed Phase 1 work
 
 - Analyzed the initially empty workspace and initialized Git on `main`.
@@ -85,7 +94,7 @@ The notification service currently implements:
 
 | Suite | Implemented behavior tests | Required final target |
 |---|---:|---:|
-| Product/domain unit | 271 | Risk-driven, no fixed final quota |
+| Product/domain unit | 330 | Risk-driven, no fixed final quota |
 | UI | 0 | 60 |
 | API | 0 | 100 |
 | Component | 0 | 25 |
@@ -149,12 +158,17 @@ Zero is intentional at this milestone. Architecture-only tests would not verify 
 | Notification quality profile | Passed: Spotless clean, Checkstyle 0, SpotBugs 0 |
 | Notification JaCoCo line coverage | Passed: 73.23% against current 40% milestone gate |
 | Notification OpenAPI lint | Passed: Redocly CLI 2.47.0, 0 warnings |
+| Warehouse service compile/package | Passed: 22 production Java files, executable Spring Boot jar |
+| Warehouse unit tests | Passed: 59 tests, 0 failures/errors/skips |
+| Warehouse quality profile | Passed: Spotless clean, Checkstyle 0, SpotBugs 0 |
+| Warehouse JaCoCo line coverage | Passed: 52.94% against current 40% milestone gate |
+| Warehouse OpenAPI lint | Passed: Redocly CLI 2.47.0, 0 warnings |
 | Docker Compose validation | Not runnable: Docker is not installed |
 | Kubernetes/Helm validation | Not runnable: kubectl and Helm are not installed |
 
 ## Known limitations
 
-- Warehouse service and all UI applications are not implemented yet.
+- All UI applications are not implemented yet.
 - Shipment persistence/migration startup and API behavior have not been container-tested because Docker is unavailable on this machine.
 - Kafka broker delivery, lease recovery, and PostgreSQL `SKIP LOCKED` behavior are unit-tested but not yet verified against real containers because Docker is unavailable.
 - Concurrent first-use races for the same idempotency key require the planned PostgreSQL integration test and conflict-normalization hardening.
@@ -181,6 +195,7 @@ With JDK 25 on `JAVA_HOME`:
 .\mvnw.cmd -pl :identity-service -Pquality clean verify
 .\mvnw.cmd -pl :routing-service -Pquality clean verify
 .\mvnw.cmd -pl :notification-service,:shipment-service -am -Pquality clean verify
+.\mvnw.cmd -pl :warehouse-service -Pquality clean verify
 ```
 
 Portable validation toolchain used on this machine:
