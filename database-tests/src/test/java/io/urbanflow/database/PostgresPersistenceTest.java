@@ -37,13 +37,20 @@ class PostgresPersistenceTest {
   private static final Instant NOW = Instant.parse("2026-08-24T12:00:00Z");
   private static final List<String> MIGRATIONS =
       List.of(
-          "services/identity-service/src/main/resources/db/migration/V1__create_identity_schema.sql",
-          "services/shipment-service/src/main/resources/db/migration/V1__create_shipment_schema.sql",
-          "services/shipment-service/src/main/resources/db/migration/V2__add_outbox_publication_leases.sql",
-          "services/tracking-service/src/main/resources/db/migration/V1__create_tracking_schema.sql",
-          "services/routing-service/src/main/resources/db/migration/V1__create_routing_schema.sql",
-          "services/notification-service/src/main/resources/db/migration/V1__create_notification_schema.sql",
-          "services/warehouse-service/src/main/resources/db/migration/V1__create_warehouse_schema.sql");
+          "services/identity-service/src/main/resources/db/migration/"
+              + "V1__create_identity_schema.sql",
+          "services/shipment-service/src/main/resources/db/migration/"
+              + "V1__create_shipment_schema.sql",
+          "services/shipment-service/src/main/resources/db/migration/"
+              + "V2__add_outbox_publication_leases.sql",
+          "services/tracking-service/src/main/resources/db/migration/"
+              + "V1__create_tracking_schema.sql",
+          "services/routing-service/src/main/resources/db/migration/"
+              + "V1__create_routing_schema.sql",
+          "services/notification-service/src/main/resources/db/migration/"
+              + "V1__create_notification_schema.sql",
+          "services/warehouse-service/src/main/resources/db/migration/"
+              + "V1__create_warehouse_schema.sql");
 
   @Container
   static final PostgreSQLContainer POSTGRES =
@@ -97,7 +104,7 @@ class PostgresPersistenceTest {
   }
 
   @Test
-  void persistsACompleteShipment() throws SQLException {
+  void persistsCompleteShipment() throws SQLException {
     UUID shipmentId = UUID.randomUUID();
     insertShipment(shipmentId, "UF0123456789ABCDEF01", 2500);
     assertThat(scalar("SELECT status FROM shipments WHERE id = ?", shipmentId))
@@ -140,7 +147,8 @@ class PostgresPersistenceTest {
             () ->
                 execute(
                     "INSERT INTO shipment_status_history "
-                        + "(id, shipment_id, new_status, actor, occurred_at) VALUES (?, ?, ?, ?, ?)",
+                        + "(id, shipment_id, new_status, actor, occurred_at) "
+                        + "VALUES (?, ?, ?, ?, ?)",
                     UUID.randomUUID(),
                     UUID.randomUUID(),
                     "CREATED",
@@ -158,7 +166,8 @@ class PostgresPersistenceTest {
       execute(
           connection,
           "INSERT INTO warehouses "
-              + "(id, code, name, city, capacity, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+              + "(id, code, name, city, capacity, created_at, updated_at) "
+              + "VALUES (?, ?, ?, ?, ?, ?, ?)",
           id,
           "SOF-ROLLBACK",
           "Rollback Warehouse",
@@ -176,14 +185,16 @@ class PostgresPersistenceTest {
     UUID id = insertWarehouse("SOF-VERSION");
     assertThat(
             update(
-                "UPDATE warehouses SET name = ?, version = version + 1 WHERE id = ? AND version = ?",
+                "UPDATE warehouses SET name = ?, version = version + 1 "
+                    + "WHERE id = ? AND version = ?",
                 "Current name",
                 id,
                 0L))
         .isEqualTo(1);
     assertThat(
             update(
-                "UPDATE warehouses SET name = ?, version = version + 1 WHERE id = ? AND version = ?",
+                "UPDATE warehouses SET name = ?, version = version + 1 "
+                    + "WHERE id = ? AND version = ?",
                 "Stale name",
                 id,
                 0L))
@@ -253,7 +264,7 @@ class PostgresPersistenceTest {
   }
 
   @Test
-  void deletingAUserCascadesRefreshSessions() throws SQLException {
+  void deletingUserCascadesRefreshSessions() throws SQLException {
     UUID userId = UUID.randomUUID();
     insertUser(userId, "cascade@example.test", "CUSTOMER");
     execute(
@@ -493,7 +504,8 @@ class PostgresPersistenceTest {
     UUID id = UUID.randomUUID();
     execute(
         "INSERT INTO warehouses "
-            + "(id, code, name, city, capacity, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            + "(id, code, name, city, capacity, created_at, updated_at) "
+            + "VALUES (?, ?, ?, ?, ?, ?, ?)",
         id,
         code,
         "Synthetic Warehouse",

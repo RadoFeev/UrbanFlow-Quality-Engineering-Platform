@@ -2,7 +2,10 @@
 
 UrbanFlow is a production-style quality engineering monorepo for a distributed courier and logistics platform. It combines realistic customer, courier, and operations applications with independent services and a reusable automation platform spanning UI, API, contracts, components, integrations, events, databases, end-to-end flows, accessibility, visual regression, performance, and security.
 
-> **Delivery status:** Phase 1 (architecture and executable repository foundation) is complete. Phase 2 is underway with compiled and quality-gated identity, shipment publication, tracking projection/cache, and courier routing vertical slices. Remaining application code and product tests are delivered incrementally according to [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md). The current verified scope is recorded in [PROJECT_STATUS.md](PROJECT_STATUS.md).
+> **Delivery status:** All nine implementation phases are complete. Every fixed suite target is met,
+> application and framework gates pass locally, and environment-dependent Docker/Kubernetes checks
+> are implemented with explicit capability reporting. Exact evidence and limitations are recorded in
+> [PROJECT_STATUS.md](PROJECT_STATUS.md).
 
 ## Business domain
 
@@ -12,7 +15,7 @@ The platform models customer registration, shipment creation, courier assignment
 
 - Three responsive web applications: customer portal, courier portal, and operations dashboard.
 - Six independently deployable services: identity, shipment, tracking, routing, notification, and warehouse.
-- PostgreSQL persistence, Kafka domain events, and Redis caching, sessions, rate limits, and distributed locks.
+- PostgreSQL persistence, Kafka domain events, and Redis tracking-timeline caching.
 - Thread-safe Java test framework with isolated browser, API, data, evidence, and cleanup lifecycles.
 - Local, Docker Compose, Selenium Grid, Kubernetes, and Helm execution models.
 - Allure reporting plus OpenTelemetry, Prometheus, and Grafana observability.
@@ -51,13 +54,11 @@ flowchart LR
     SH --> PG
     TR --> PG
     WH --> PG
-    ID --> RD
     TR --> RD
     SH <--> KF
     RT <--> KF
     TR <--> KF
     NT <--> KF
-    WH <--> KF
     GW -. traces .-> OBS
     KF -. metrics and traces .-> OBS
 ```
@@ -136,8 +137,8 @@ sequenceDiagram
     R->>K: CourierAssigned
     K->>T: CourierAssigned / status events
     T->>P: Append tracking history
-    K->>N: NotificationRequested
-    N-->>C: Delivery notification
+    K->>N: Shipment status event
+    N-->>C: Provider delivery notification
 ```
 
 ## Technology stack
@@ -160,12 +161,12 @@ component-tests/         Service tests with controlled adapters
 integration-tests/       Cross-adapter tests with real infrastructure
 event-tests/             Kafka schema, ordering, retry, DLT, idempotency tests
 database-tests/          PostgreSQL migration, constraint, transaction tests
-e2e-tests/               Full business flows across UI, API, events, and storage
+e2e-tests/               Deployed black-box identity, shipment, and tracking journeys
 accessibility-tests/      axe-core WCAG 2.2 AA checks
 visual-tests/             Multi-viewport baseline and diff checks
 performance-tests/        k6 smoke, load, stress, spike, and soak scenarios
 security-tests/           Safe local security regression suite
-test-orchestrator/        Suite selection, sharding, environment, unified reporting
+test-orchestrator/        Suite selection, environment, and unified reporting
 observability/            Collector, Prometheus, Grafana, dashboards
 infrastructure/           Docker Compose and local platform configuration
 kubernetes/               Raw Kubernetes manifests
@@ -201,22 +202,51 @@ Set-Location urbanflow-quality-platform
 .\mvnw.cmd clean verify
 ```
 
-The current Phase 1 reactor contains no product tests; a successful build validates the module graph, dependency catalog, build prerequisites, and repository model. Test counts are never inflated with empty tests.
+A successful build compiles all 27 reactor projects and runs every locally applicable test. Suites
+that require Docker or a deployed stack report explicit skips when that capability is unavailable;
+they never substitute simulated passes.
 
-## Local and Docker execution
+## Local execution
 
-Planned execution contracts are stable even while suites are implemented:
+Use focused module commands during development:
 
 ```bash
 ./mvnw clean verify
-./mvnw clean verify -Dgroups=smoke
-./mvnw clean verify -Dgroups=api
-./mvnw clean verify -Dgroups=e2e
-./mvnw clean verify -Dbrowser=firefox -Dheadless=false
-./mvnw clean verify -Dremote.url=http://localhost:4444
+./mvnw -Pquality clean verify
+./mvnw -pl :api-tests -am -Dgroups=api clean test
+./mvnw -pl :ui-tests -am -Dgroups=ui -Dbrowser=chrome clean test
+./mvnw -pl :event-tests -am -Dgroups=event clean test
+./mvnw -pl :accessibility-tests -am -Dgroups=accessibility clean test
+./mvnw -pl :visual-tests -am -Dgroups=visual clean test
+./mvnw -pl :security-tests -Dgroups=security clean test
 ```
 
-Docker Compose profiles will be exposed as `minimal`, `integration`, `grid`, `observability`, and `full`. Until Phase 8, Docker commands are intentionally not advertised as runnable; see [PROJECT_STATUS.md](PROJECT_STATUS.md).
+On Windows, use `mvnw.cmd` instead of `mvnw`. The typed wrapper
+`.\scripts\run-suite.ps1 -Suite api -Execute` is convenient when you want unified Allure metadata.
+
+## Docker and deployed E2E execution
+
+Copy `.env.example` to `.env`, fill the blank secret fields, then:
+
+```powershell
+.\mvnw.cmd -DskipTests package
+docker compose -f infrastructure/compose.yml --profile minimal up -d --build --wait
+.\mvnw.cmd -pl :e2e-tests -am -Dgroups=e2e -De2e.enabled=true test
+docker compose -f infrastructure/compose.yml --profile minimal down
+```
+
+Profiles are `minimal`, `integration`, `grid`, `observability`, and `full`; their contents and ports
+are documented in [infrastructure/README.md](infrastructure/README.md).
+
+For Grid, start the application and browser profiles together and give remote browser nodes
+network-resolvable application origins:
+
+```powershell
+docker compose -f infrastructure/compose.yml --profile minimal --profile grid up -d --build --wait
+.\mvnw.cmd -pl :ui-tests -am -Dgroups=ui -Dremote.url=http://localhost:4444 `
+  -Dcustomer.url=http://customer-portal:3001 -Dcourier.url=http://courier-portal:3002 `
+  -Doperations.url=http://operations-dashboard:3003 test
+```
 
 ## Test suites and taxonomy
 
@@ -229,6 +259,17 @@ Configuration resolution follows this precedence: JVM system property, environme
 ## Reports and observability
 
 All Java suites emit JUnit XML and Allure results. Failed UI flows attach a screenshot, page source, browser logs, and available network/video evidence. API and event failures attach masked request/response or event envelopes. Correlation and trace IDs are carried through HTTP, Kafka, logs, and Allure to support a single-flow investigation.
+
+CI publishes merged Allure Pages. Locally, generate and open a module report without a global CLI:
+
+```powershell
+npx --yes allure-commandline@2.34.1 generate `
+  ui-tests/target/allure-results --clean --output target/allure-report
+npx --yes allure-commandline@2.34.1 open target/allure-report
+```
+
+The `observability` Compose profile provisions Collector, Prometheus at `9090`, Grafana at `3000`,
+eight alerts, and the UrbanFlow quality dashboard.
 
 ## CI/CD
 
@@ -244,15 +285,20 @@ flowchart LR
     REPORT --> RELEASE[Versioned release]
 ```
 
-Fifteen workflow entry points are delivered in Phase 8. Their required quality gates are already specified in [docs/QUALITY_GATES.md](docs/QUALITY_GATES.md) and [docs/CI_CD.md](docs/CI_CD.md).
+Fifteen workflow entry points plus one private reusable workflow live in `.github/workflows`. Their
+triggers, branch gates, sharding, evidence, and retry rules are specified in
+[docs/QUALITY_GATES.md](docs/QUALITY_GATES.md) and [docs/CI_CD.md](docs/CI_CD.md).
 
 ## Troubleshooting
 
-Start with [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md). The most common Phase 1 failure is running the wrapper with Java 17 or 21; the build intentionally requires Java 25.
+Start with [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md). The build intentionally requires Java
+25; run `.\scripts\check-prerequisites.ps1` to distinguish required and optional tooling.
 
 ## Roadmap
 
-The nine delivery phases, dependencies, exit criteria, test targets, and verification commands are tracked in [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md). No milestone is marked complete before its applicable build and tests pass.
+All nine delivery phases are complete. Their dependencies, exit criteria, test targets, and final
+verification commands remain available in [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md); the
+current release evidence is in [PROJECT_STATUS.md](PROJECT_STATUS.md).
 
 ## Contributing
 

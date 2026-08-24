@@ -1,5 +1,12 @@
 # Implementation Plan
 
+## Completion status
+
+All nine milestones are implemented as version `0.1.0`. The authoritative delivered inventory,
+verification evidence, capability-dependent checks, and operator commands are maintained in
+[PROJECT_STATUS.md](PROJECT_STATUS.md); requirement-to-test traceability is maintained in
+[docs/COVERAGE_MATRIX.md](docs/COVERAGE_MATRIX.md).
+
 ## Delivery principles
 
 UrbanFlow is delivered as independently verifiable milestones. Each milestone must compile, run its applicable tests, update documentation and `PROJECT_STATUS.md`, and end in one cohesive Conventional Commit. Test-count targets are reached only with behavior-checking tests; empty, disabled, or duplicate cases do not count.

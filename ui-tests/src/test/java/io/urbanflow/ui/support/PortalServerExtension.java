@@ -22,10 +22,18 @@ public final class PortalServerExtension implements BeforeAllCallback {
 
   @Override
   public void beforeAll(ExtensionContext context) {
+    if (remoteExecution()) {
+      return;
+    }
     context
         .getRoot()
         .getStore(NAMESPACE)
         .getOrComputeIfAbsent("portal-servers", ignored -> ServerGroup.start(), ServerGroup.class);
+  }
+
+  private static boolean remoteExecution() {
+    String remoteUrl = System.getProperty("remote.url");
+    return remoteUrl != null && !remoteUrl.isBlank();
   }
 
   private static final class ServerGroup

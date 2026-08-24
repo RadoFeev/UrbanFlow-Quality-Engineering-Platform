@@ -24,6 +24,10 @@
 
 Each job uses least-privilege permissions, concurrency cancellation for superseded branch work, wrapper validation, JDK 25, Maven cache keyed by POM/wrapper files, explicit timeout, environment capability check, deterministic run ID, and always-run artifact upload. Secrets are unavailable to untrusted fork code.
 
+The security workflow requires an `NVD_API_KEY` repository secret. Dependency-Check receives only
+the environment-variable name and fails closed if the secret is absent; vulnerability reports are
+still uploaded by the always-run evidence step when analysis completes or fails.
+
 All 15 named workflows are implemented under `.github/workflows`; a private reusable workflow keeps
 the JDK/cache/evidence pattern identical. UI uses a Chrome/Firefox and customer/operations-courier
 matrix. Integration and browser lanes may retry once only through the allowlisted infrastructure

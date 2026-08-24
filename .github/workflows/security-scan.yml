@@ -24,7 +24,14 @@ jobs:
       - name: Execute production security controls
         run: ./mvnw -pl :security-tests -Dgroups=security clean test
       - name: Dependency vulnerability gate
-        run: ./mvnw org.owasp:dependency-check-maven:check -DfailBuildOnCVSS=7 -Dformats=HTML,JSON
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+        run: |
+          test -n "$NVD_API_KEY" || { echo "NVD_API_KEY repository secret is required"; exit 1; }
+          ./mvnw org.owasp:dependency-check-maven:check \
+            -DnvdApiKeyEnvironmentVariable=NVD_API_KEY \
+            -DfailBuildOnCVSS=7 \
+            -Dformats=HTML,JSON
       - name: Filesystem vulnerability and secret scan
         uses: aquasecurity/trivy-action@0.33.1
         with:

@@ -4,23 +4,35 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.
 
 ## [Unreleased]
 
-### Planned
-
-- Demo services, portals, Test Core, behavior suites, infrastructure, CI/CD, observability, Kubernetes, and Helm according to the implementation plan.
-
-### Added
-
-- Shipment-service vertical slice with lifecycle policy, optimistic locking, idempotent creation, PostgreSQL/Flyway schema, status history, traceable HTTP API, and OpenAPI 3.1 contract.
-- Lease-safe transactional outbox publication with Spring Kafka, stable envelopes and ordering keys, broker acknowledgments, capped retry, bounded metrics, and 76 passing shipment unit cases.
-- Tracking-service Kafka projection with event/schema validation, monotonic idempotency, PostgreSQL timeline storage, resilient Redis cache-aside reads, public timeline API, and 36 passing unit cases.
-- Identity-service registration, bcrypt credentials, lockout, signed access tokens, rotating refresh sessions, single-use password reset, RBAC, optimistic role administration, and 80 passing unit cases.
-- Routing-service idempotent shipment consumption, least-loaded courier capacity assignment, versioned route lifecycle, privacy-safe transactional outbox, acknowledged Kafka publication/retry, and 47 passing unit cases.
+No unreleased changes.
 
 ## [0.1.0] - 2026-08-24
 
 ### Added
 
-- Java 25/Maven 3.9.16 multi-module repository foundation.
-- Pinned stable dependency and build-plugin catalog.
-- Architecture, domain lifecycle, event flow, risk analysis, strategy, quality gates, environment, observability, non-functional, contribution, and troubleshooting documentation.
-- Maven Wrapper, repository hygiene, governance, and milestone/status tracking.
+- Java 25/Maven 3.9.16 multi-module platform with six Spring Boot services, three responsive
+  portals, reusable test libraries, and twelve dedicated automation-suite modules.
+- Identity, shipment, tracking, routing, notification, and warehouse behavior with PostgreSQL/Flyway,
+  Kafka event processing, Redis tracking cache, optimistic locking, idempotency, audit, RBAC, and
+  OpenAPI 3.1 contracts.
+- Thread-safe Selenium, REST Assured, JDBC, Kafka, Redis, data-generation, orchestration, cleanup,
+  masking, tracing, and Allure evidence components.
+- Behavior coverage above every fixed target: 96 UI, 157 API, 28 component, 25 integration, 20
+  contract, 48 event, 29 database, 20 E2E, 15 accessibility, 15 visual, 10 performance, and 20
+  security scenarios.
+- Five Docker Compose profiles, Selenium Grid, Pact Broker, Kafka UI, OpenTelemetry, Prometheus,
+  Grafana, Kubernetes resources, a reusable Helm chart, and 15 GitHub Actions workflow entry points.
+- Maven Wrapper, stable dependency/plugin catalog, static-analysis and coverage gates, semantic
+  release workflow, repository governance, architecture and test diagrams, traceability matrix,
+  runbooks, and release-readiness evidence.
+- Runtime Allure JUnit adapter, unified local result generation, and CI Pages report publication.
+
+### Fixed
+
+- Remote Selenium execution now uses network-resolvable deployed portal URLs without starting an
+  unreachable loopback portal fixture on Grid clients.
+- Dependency scanning now requires an environment-backed NVD key and fails explicitly before an
+  unauthenticated or incomplete vulnerability update can be mistaken for a clean result.
+
+[Unreleased]: https://github.com/your-org/urbanflow-quality-platform/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/your-org/urbanflow-quality-platform/releases/tag/v0.1.0

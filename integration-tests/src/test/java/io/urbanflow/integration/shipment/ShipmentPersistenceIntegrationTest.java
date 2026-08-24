@@ -187,13 +187,13 @@ class ShipmentPersistenceIntegrationTest {
   }
 
   @Test
-  void missingUuidProducesAStableDomainFailure() {
+  void missingUuidProducesStableDomainFailure() {
     assertThatThrownBy(() -> service.findById(UUID.randomUUID()))
         .isInstanceOf(ShipmentNotFoundException.class);
   }
 
   @Test
-  void missingTrackingNumberProducesAStableDomainFailure() {
+  void missingTrackingNumberProducesStableDomainFailure() {
     assertThatThrownBy(() -> service.findByTrackingNumber("UF000000000000000000"))
         .isInstanceOf(ShipmentNotFoundException.class);
   }
@@ -324,7 +324,7 @@ class ShipmentPersistenceIntegrationTest {
   }
 
   @Test
-  void cancellationRequiresAReason() {
+  void cancellationRequiresReason() {
     Shipment created = create("integration-cancel-reason", command("Cancel parcel"));
     assertThatThrownBy(
             () ->

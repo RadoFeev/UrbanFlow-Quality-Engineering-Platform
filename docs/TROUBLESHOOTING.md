@@ -37,3 +37,18 @@ Search by run ID, inspect the cleanup attachment, and remove only resources owne
 ## Missing report evidence
 
 Ensure the suite writes Allure results under the module `target/allure-results`, and verify always-run artifact collection. Evidence services must log attachment errors without masking the original test failure.
+
+Generate a local report without a global Allure installation:
+
+```powershell
+npx --yes allure-commandline@2.34.1 generate `
+  ui-tests/target/allure-results --clean --output target/allure-report
+npx --yes allure-commandline@2.34.1 open target/allure-report
+```
+
+## Dependency-Check cannot update NVD data
+
+An `Invalid API Key` or `No documents exist` update failure means vulnerability analysis did not
+run; it is not a clean security result. Configure the `NVD_API_KEY` repository secret in CI or the
+same environment variable locally, then use `-DnvdApiKeyEnvironmentVariable=NVD_API_KEY`. Do not
+place the key in the POM, workflow command line, shell history, or committed `.env` files.

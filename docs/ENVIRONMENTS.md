@@ -31,4 +31,6 @@ Before a suite starts, the orchestrator verifies build identity, service readine
 
 ## Kubernetes local execution
 
-Milestone 8 supplies kind/minikube instructions, namespace-scoped resources, Helm values for local storage and reduced resources, and a test Job. Secrets must be created from local environment or an external secret solution; example manifests never contain credentials.
+The repository supplies kind/minikube instructions, namespace-scoped resources, Helm values for
+local storage and reduced resources, and a test Job. Secrets must be created from local environment
+or an external secret solution; example manifests never contain credentials.
