@@ -4,7 +4,7 @@
 
 **Status date:** 2026-08-24
 
-**Current milestone:** Milestone 1 complete; Milestone 2 in progress
+**Current milestone:** Phases 1-3 complete; Phase 4 in progress
 
 ## Implemented modules
 
@@ -15,7 +15,28 @@ The Maven reactor and parent relationships are implemented for:
 - `test-core`, `test-data`, `test-orchestrator`.
 - UI, API, contract, component, integration, event, database, end-to-end, accessibility, visual, performance, and security suites.
 
-Most test modules currently establish the executable build boundary only. All six services now contain independently executable Phase 2 vertical slices; no placeholder classes or empty tests have been added.
+The Phase 4 behavior suites and later browser/non-functional suites still establish their executable
+build boundaries only. All six services contain independently executable Phase 2 vertical slices, and
+the reusable framework, test-data library, and orchestrator are implemented and verified. No
+placeholder classes or empty tests have been added.
+
+## Phase 3 test platform
+
+The reusable test platform currently implements:
+
+- Immutable property/environment configuration, environment-backed secret resolution, and validated
+  environment profiles.
+- Thread-local local/remote Selenium lifecycle with zero implicit wait and Chrome, Firefox, and Edge
+  option factories.
+- Reusable REST Assured, JDBC, Kafka, Redis, JSON Schema, polling, retry, cleanup, and soft-assertion
+  components.
+- Automatic screenshot, page-source, log, video-link, Allure, correlation-ID, and trace-ID evidence.
+- JUnit lifecycle extensions, annotations, listeners, quarantine metadata, and stable failure
+  classification.
+- Immutable synthetic data models, fluent builders, object mothers, valid/invalid boundary datasets,
+  deterministic seeded random generation, run-scoped uniqueness, cleanup, anonymization, and masking.
+- A validated cross-platform suite orchestrator with preview/execute modes and unified Allure
+  environment, executor, and defect-category metadata.
 
 ## Phase 2 progress
 
@@ -103,6 +124,7 @@ The application layer currently implements:
 | Suite | Implemented behavior tests | Required final target |
 |---|---:|---:|
 | Product/domain unit and asset contract | 345 | Risk-driven, no fixed final quota |
+| Framework, data, and orchestrator unit | 125 | Risk-driven, no fixed final quota |
 | UI | 0 | 60 |
 | API | 0 | 100 |
 | Component | 0 | 25 |
@@ -175,6 +197,12 @@ Zero is intentional at this milestone. Architecture-only tests would not verify 
 | Portal asset contract tests | Passed: 15 tests, 0 failures/errors/skips |
 | Portal packaging | Passed: 3 executable Spring Boot jars |
 | Portal quality profile | Passed: Spotless clean, Checkstyle 0, SpotBugs 0, JaCoCo gate met |
+| Test Core unit tests | Passed: 71 tests, 0 failures/errors/skips |
+| Test Core quality profile | Passed: Spotless clean, Checkstyle 0, SpotBugs 0, JaCoCo 59.57% |
+| Test Data unit tests | Passed: 40 tests, 0 failures/errors/skips |
+| Test Data quality profile | Passed: Spotless clean, Checkstyle 0, SpotBugs 0, JaCoCo 97.01% |
+| Test Orchestrator unit tests | Passed: 14 tests, 0 failures/errors/skips |
+| Test Orchestrator quality profile | Passed: Spotless clean, Checkstyle 0, SpotBugs 0, JaCoCo 79.39% |
 | Docker Compose validation | Not runnable: Docker is not installed |
 | Kubernetes/Helm validation | Not runnable: kubectl and Helm are not installed |
 
@@ -184,7 +212,8 @@ Zero is intentional at this milestone. Architecture-only tests would not verify 
 - Shipment persistence/migration startup and API behavior have not been container-tested because Docker is unavailable on this machine.
 - Kafka broker delivery, lease recovery, and PostgreSQL `SKIP LOCKED` behavior are unit-tested but not yet verified against real containers because Docker is unavailable.
 - Concurrent first-use races for the same idempotency key require the planned PostgreSQL integration test and conflict-normalization hardening.
-- Black-box tracking behavior still needs container-backed Kafka/PostgreSQL/Redis coverage; Test Core and the dedicated behavior suites are not implemented yet.
+- Black-box tracking behavior still needs container-backed Kafka/PostgreSQL/Redis coverage; the
+  reusable framework is complete and the dedicated Phase 4 behavior suites are next.
 - Routing HTTP endpoints still require the planned shared bearer authorization adapter before portal integration; current route-domain and event boundaries are implemented and tested.
 - Docker, CI workflows, Kubernetes, Helm, and dashboards are scheduled for Milestone 8.
 - The checked machine requires the portable JDK used during validation or a separately installed JDK 25.
@@ -192,7 +221,9 @@ Zero is intentional at this milestone. Architecture-only tests would not verify 
 
 ## Next milestone
 
-Milestone 2 continues with shared service authorization and service-backed portal adapters, followed by container-backed validation when a Docker runtime is available.
+Phase 4 implements the API, component, database, integration, and consumer-contract suites. Shared
+service authorization and service-backed portal adapters will be hardened alongside those black-box
+boundaries, followed by container-backed validation when a Docker runtime is available.
 
 ## Exact commands
 
