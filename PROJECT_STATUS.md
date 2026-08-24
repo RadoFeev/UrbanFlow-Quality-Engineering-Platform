@@ -4,7 +4,7 @@
 
 **Status date:** 2026-08-24
 
-**Current milestone:** Phases 1-6 implemented; Phase 7 in progress
+**Current milestone:** Phases 1-7 implemented; Phase 8 in progress
 
 ## Implemented modules
 
@@ -19,6 +19,20 @@ The API, component, integration, database, consumer-contract, UI, event, and E2E
 implemented. Local and browser-backed suites are verified; PostgreSQL, Kafka broker, and deployed
 journey checks compile and discover all tests but require their documented external runtime to
 execute. No placeholder classes or empty tests have been added.
+
+## Phase 7 non-functional suites
+
+- 15 Selenium/axe-core checks scan all three portals across five responsive breakpoints against WCAG
+  A/AA rule families. The gate exposed and drove a real courier-portal color-contrast correction.
+- 15 reviewed PNG baselines cover mobile, tablet, laptop, desktop, and wide-screen entry states with
+  bounded per-channel tolerance, a 0.1% diff gate, and actual/diff failure evidence.
+- 10 independently thresholded k6 scenarios cover health and business-read boundaries across all six
+  services with smoke, load, stress, spike, and soak profiles. `k6 inspect` validates the bundle.
+- 20 executable security controls protect password hashing, enumeration resistance, lockout, JWT,
+  opaque credentials, rotation/reset, CORS, default deny, permissions, cache policy, concurrency,
+  idempotency, trace parsing, HTTPS providers, uploads, and audit behavior.
+- An allowlisted, non-destructive OWASP ZAP passive-baseline runner produces HTML and JSON evidence
+  when a local Docker runtime is available.
 
 ## Phase 6 distributed-flow suites
 
@@ -179,13 +193,13 @@ The application layer currently implements:
 | Event/Kafka | 48 implemented; 47 local + 1 Docker-backed | 30 |
 | Database | 29 implemented; Docker-blocked locally | 20 |
 | End-to-end | 20 implemented; deployed-stack opt-in | 20 |
-| Accessibility | 0 | 15 |
-| Visual | 0 | 15 |
-| Performance scenarios | 0 | 10 |
-| Security | 0 | 20 |
+| Accessibility | 15 | 15 |
+| Visual | 15 | 15 |
+| Performance scenarios | 10 | 10 |
+| Security | 20 | 20 |
 
-Remaining zero-count suites are intentionally deferred to their owning phases. Architecture-only
-tests are not used to inflate the inventory.
+Every fixed suite target is implemented. Architecture-only tests are not used to inflate the
+inventory, and environment-dependent checks report explicit skips instead of simulated passes.
 
 ## Verification performed
 
@@ -265,6 +279,12 @@ tests are not used to inflate the inventory.
 | Phase 6 event suite | Passed: 47 executed, 1 Docker-aware skip, 0 failures/errors |
 | Phase 6 E2E discovery | Passed: 20 deployed journeys discovered and explicitly skipped locally |
 | Phase 6 quality profile | Passed: Spotless clean, Checkstyle 0 violations, SpotBugs 0 findings |
+| Phase 7 axe-core accessibility | Passed: 15 tests, 0 failures/errors/skips |
+| Phase 7 visual comparison | Passed: 15 committed baselines, 0 failures/errors/skips |
+| Phase 7 k6 bundle inspection | Passed: 10 scenarios and 30 scenario-specific thresholds |
+| Phase 7 performance contracts | Passed: 10 tests, 0 failures/errors/skips |
+| Phase 7 security controls | Passed: 20 tests, 0 failures/errors/skips |
+| Phase 7 quality profile | Passed: Spotless clean, Checkstyle 0 violations, SpotBugs 0 findings |
 | Portal JavaScript syntax after UI hardening | Passed: all three application scripts |
 | Docker Compose validation | Not runnable: Docker is not installed |
 | Kubernetes/Helm validation | Not runnable: kubectl and Helm are not installed |
@@ -281,12 +301,13 @@ tests are not used to inflate the inventory.
 - Black-box tracking is covered by deployed E2E journeys; a complete local stack still needs Docker.
 - Routing HTTP endpoints still require the planned shared bearer authorization adapter before portal integration; current route-domain and event boundaries are implemented and tested.
 - Docker, CI workflows, Kubernetes, Helm, and dashboards are scheduled for Milestone 8.
+- The ZAP passive baseline is implemented but cannot run on this machine without Docker.
 - The checked machine requires the portable JDK used during validation or a separately installed JDK 25.
 - Repository URLs and `CODEOWNERS` identities use safe example organization values until a real GitHub owner is assigned.
 
 ## Next milestone
 
-Phase 7 implements executable accessibility, visual-regression, performance, and security suites.
+Phase 8 implements CI/CD, container packaging, Docker Compose, Kubernetes, Helm, and observability.
 
 ## Exact commands
 
@@ -314,6 +335,11 @@ With JDK 25 on `JAVA_HOME`:
 .\mvnw.cmd -pl :event-tests -am -Dgroups=event test
 .\mvnw.cmd -pl :e2e-tests -am -Dgroups=e2e test
 .\mvnw.cmd -pl :e2e-tests -am -Dgroups=e2e -De2e.enabled=true test
+.\mvnw.cmd -pl :accessibility-tests -am -Dgroups=accessibility test
+.\mvnw.cmd -pl :visual-tests -am -Dgroups=visual test
+.\mvnw.cmd -pl :performance-tests -Dgroups=performance test
+.\mvnw.cmd -pl :security-tests -Dgroups=security test
+k6 inspect performance-tests/k6/urbanflow.js
 ```
 
 Portable validation toolchain used on this machine:

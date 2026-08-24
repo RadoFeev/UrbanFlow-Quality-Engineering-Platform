@@ -1,2 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"><modelVersion>4.0.0</modelVersion><parent><groupId>io.urbanflow.quality</groupId><artifactId>urbanflow-quality-platform</artifactId><version>0.1.0</version></parent><artifactId>visual-tests</artifactId></project>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent><groupId>io.urbanflow.quality</groupId><artifactId>urbanflow-quality-platform</artifactId><version>0.1.0</version></parent>
+    <artifactId>visual-tests</artifactId>
+    <name>UrbanFlow Visual Regression Tests</name>
+    <properties><selenium.offline>true</selenium.offline></properties>
+    <dependencies>
+        <dependency><groupId>io.urbanflow.quality</groupId><artifactId>test-core</artifactId><version>${project.version}</version><scope>test</scope></dependency>
+        <dependency><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter-engine</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter-params</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>org.assertj</groupId><artifactId>assertj-core</artifactId><scope>test</scope></dependency>
+    </dependencies>
+    <build><plugins><plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-surefire-plugin</artifactId><configuration><systemPropertyVariables><workspace.root>${maven.multiModuleProjectDirectory}</workspace.root></systemPropertyVariables><environmentVariables><SE_OFFLINE>${selenium.offline}</SE_OFFLINE></environmentVariables></configuration></plugin></plugins></build>
+</project>
