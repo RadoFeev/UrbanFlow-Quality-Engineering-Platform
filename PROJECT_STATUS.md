@@ -15,9 +15,19 @@ The Maven reactor and parent relationships are implemented for:
 - `test-core`, `test-data`, `test-orchestrator`.
 - UI, API, contract, component, integration, event, database, end-to-end, accessibility, visual, performance, and security suites.
 
-Most modules currently establish the executable build boundary only. `shipment-service` and `tracking-service` now contain the first event-driven Phase 2 vertical slices; no placeholder classes or empty tests have been added.
+Most modules currently establish the executable build boundary only. `identity-service`, `shipment-service`, and `tracking-service` now contain independently executable Phase 2 vertical slices; no placeholder classes or empty tests have been added.
 
 ## Phase 2 progress
+
+The identity service currently implements:
+
+- Customer registration with canonical email uniqueness, central password policy, and bcrypt hashing.
+- Enumeration-resistant login, configurable temporary lockout, and account-state enforcement.
+- Signed HS256 access credentials with verified issuer, audience, subject, role, permissions, token ID, issue time, and expiry.
+- 256-bit opaque refresh/reset credentials with irreversible stored hashes, refresh rotation/replay prevention, single-use resets, and full session revocation after password change.
+- Customer, courier, operator, and admin RBAC with immutable fine-grained permission sets.
+- Authenticated profile reads and permission-gated, `If-Match` version-checked role administration.
+- PostgreSQL/Flyway persistence, stable security/error responses, restrictive CORS, health/Prometheus endpoints, and an OpenAPI 3.1 contract.
 
 The shipment service currently implements:
 
@@ -57,7 +67,7 @@ The tracking service currently implements:
 
 | Suite | Implemented behavior tests | Required final target |
 |---|---:|---:|
-| Product/domain unit | 112 | Risk-driven, no fixed final quota |
+| Product/domain unit | 192 | Risk-driven, no fixed final quota |
 | UI | 0 | 60 |
 | API | 0 | 100 |
 | Component | 0 | 25 |
@@ -106,12 +116,17 @@ Zero is intentional at this milestone. Architecture-only tests would not verify 
 | Tracking quality profile | Passed: Spotless clean, Checkstyle 0, SpotBugs 0 |
 | Tracking JaCoCo line coverage | Passed: 90.57% against current 40% milestone gate |
 | Tracking OpenAPI lint | Passed: Redocly CLI 2.47.0, 0 warnings |
+| Identity service compile/package | Passed: 44 production Java files, executable Spring Boot jar |
+| Identity unit tests | Passed: 80 tests, 0 failures/errors/skips |
+| Identity quality profile | Passed: Spotless clean, Checkstyle 0, SpotBugs 0 |
+| Identity JaCoCo line coverage | Passed: 76.08% against current 40% milestone gate |
+| Identity OpenAPI lint | Passed: Redocly CLI 2.47.0, 0 warnings |
 | Docker Compose validation | Not runnable: Docker is not installed |
 | Kubernetes/Helm validation | Not runnable: kubectl and Helm are not installed |
 
 ## Known limitations
 
-- Identity, routing, notification, and warehouse services and all UI applications are not implemented yet.
+- Routing, notification, and warehouse services and all UI applications are not implemented yet.
 - Shipment persistence/migration startup and API behavior have not been container-tested because Docker is unavailable on this machine.
 - Kafka broker delivery, lease recovery, and PostgreSQL `SKIP LOCKED` behavior are unit-tested but not yet verified against real containers because Docker is unavailable.
 - Concurrent first-use races for the same idempotency key require the planned PostgreSQL integration test and conflict-normalization hardening.
@@ -122,7 +137,7 @@ Zero is intentional at this milestone. Architecture-only tests would not verify 
 
 ## Next milestone
 
-Milestone 2 continues with identity, routing, notification, warehouse, and minimum responsive portals, followed by container-backed validation when a Docker runtime is available.
+Milestone 2 continues with routing, notification, warehouse, and minimum responsive portals, followed by container-backed validation when a Docker runtime is available.
 
 ## Exact commands
 
@@ -134,6 +149,7 @@ With JDK 25 on `JAVA_HOME`:
 .\mvnw.cmd help:effective-pom -Doutput=target/effective-pom.xml
 .\mvnw.cmd -pl :shipment-service -am -Pquality clean verify
 .\mvnw.cmd -pl :shipment-service,:tracking-service -am -Pquality clean verify
+.\mvnw.cmd -pl :identity-service -Pquality clean verify
 ```
 
 Portable validation toolchain used on this machine:

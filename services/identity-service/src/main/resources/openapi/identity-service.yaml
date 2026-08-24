@@ -1,0 +1,460 @@
+openapi: 3.1.0
+info:
+  title: UrbanFlow Identity Service API
+  version: 1.0.0
+  description: Registration, session lifecycle, profile, and role administration boundary.
+  license:
+    name: MIT
+    identifier: MIT
+servers:
+  - url: https://identity.urbanflow.local
+    description: Environment identity service
+security:
+  - bearerAuth: []
+tags:
+  - name: Authentication
+    description: Public credential and session lifecycle
+  - name: Users
+    description: Authenticated profile and role administration
+paths:
+  /api/v1/auth/register:
+    post:
+      tags: [Authentication]
+      summary: Register a customer account
+      operationId: registerCustomer
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: Customer registered
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControl'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '409':
+          $ref: '#/components/responses/EmailConflict'
+        '422':
+          $ref: '#/components/responses/WeakPassword'
+  /api/v1/auth/login:
+    post:
+      tags: [Authentication]
+      summary: Exchange credentials for a session
+      operationId: login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/AuthTokens'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationFailed'
+        '423':
+          $ref: '#/components/responses/AccountUnavailable'
+  /api/v1/auth/refresh:
+    post:
+      tags: [Authentication]
+      summary: Rotate a refresh credential
+      operationId: refreshSession
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/AuthTokens'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationFailed'
+  /api/v1/auth/logout:
+    post:
+      tags: [Authentication]
+      summary: Revoke a refresh credential
+      operationId: logout
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenRequest'
+      responses:
+        '204':
+          description: Refresh credential revoked or already absent
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControl'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+  /api/v1/auth/password-reset/request:
+    post:
+      tags: [Authentication]
+      summary: Request a password reset
+      description: Always returns the same response to prevent account enumeration.
+      operationId: requestPasswordReset
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordResetRequest'
+      responses:
+        '202':
+          description: Request accepted for processing
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControl'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+  /api/v1/auth/password-reset/confirm:
+    post:
+      tags: [Authentication]
+      summary: Complete a password reset
+      operationId: confirmPasswordReset
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordResetConfirmation'
+      responses:
+        '204':
+          description: Password changed and live refresh sessions revoked
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControl'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationFailed'
+        '422':
+          $ref: '#/components/responses/WeakPassword'
+  /api/v1/users/me:
+    get:
+      tags: [Users]
+      summary: Read the authenticated profile
+      operationId: getCurrentUser
+      responses:
+        '200':
+          description: Current user profile
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+            Cache-Control:
+              $ref: '#/components/headers/CacheControl'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '404':
+          $ref: '#/components/responses/UserNotFound'
+  /api/v1/users/{userId}/role:
+    patch:
+      tags: [Users]
+      summary: Change a user role
+      operationId: changeUserRole
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: If-Match
+          in: header
+          required: true
+          description: Strong version entity tag such as `"v3"`.
+          schema:
+            type: string
+            pattern: '^"v[0-9]+"$'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoleUpdateRequest'
+      responses:
+        '200':
+          description: Updated user profile
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+            Cache-Control:
+              $ref: '#/components/headers/CacheControl'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/AuthenticationRequired'
+        '403':
+          $ref: '#/components/responses/AccessDenied'
+        '404':
+          $ref: '#/components/responses/UserNotFound'
+        '409':
+          $ref: '#/components/responses/VersionConflict'
+        '428':
+          $ref: '#/components/responses/PreconditionRequired'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  headers:
+    ETag:
+      description: Strong optimistic version tag.
+      schema:
+        type: string
+        pattern: '^"v[0-9]+"$'
+    CacheControl:
+      description: Sensitive identity responses are not stored.
+      schema:
+        type: string
+        const: no-store
+  responses:
+    AuthTokens:
+      description: Access and rotating refresh credentials
+      headers:
+        Cache-Control:
+          $ref: '#/components/headers/CacheControl'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AuthTokens'
+    InvalidRequest:
+      description: Invalid or malformed request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+    AuthenticationRequired:
+      description: Valid bearer authentication is required
+      headers:
+        WWW-Authenticate:
+          schema:
+            type: string
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+    AuthenticationFailed:
+      description: Credentials or session token are invalid
+      headers:
+        WWW-Authenticate:
+          schema:
+            type: string
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+    AccountUnavailable:
+      description: Account is locked or disabled
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+    AccessDenied:
+      description: Authenticated principal lacks the required permission
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+    EmailConflict:
+      description: Canonical email is already registered
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+    UserNotFound:
+      description: User identifier does not exist
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+    WeakPassword:
+      description: Password does not satisfy the policy
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+    VersionConflict:
+      description: Supplied entity version is stale
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+    PreconditionRequired:
+      description: If-Match is required for this mutation
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+  schemas:
+    RegisterRequest:
+      type: object
+      additionalProperties: false
+      required: [email, displayName, password]
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 254
+          example: customer.001@example.test
+        displayName:
+          type: string
+          minLength: 1
+          maxLength: 100
+          example: Customer 001
+        password:
+          type: string
+          format: password
+          minLength: 12
+          maxLength: 128
+          writeOnly: true
+    LoginRequest:
+      type: object
+      additionalProperties: false
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        password:
+          type: string
+          format: password
+          maxLength: 128
+          writeOnly: true
+    TokenRequest:
+      type: object
+      additionalProperties: false
+      required: [refreshToken]
+      properties:
+        refreshToken:
+          type: string
+          minLength: 1
+          maxLength: 256
+          writeOnly: true
+    PasswordResetRequest:
+      type: object
+      additionalProperties: false
+      required: [email]
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 254
+    PasswordResetConfirmation:
+      type: object
+      additionalProperties: false
+      required: [resetToken, newPassword]
+      properties:
+        resetToken:
+          type: string
+          minLength: 1
+          maxLength: 256
+          writeOnly: true
+        newPassword:
+          type: string
+          format: password
+          minLength: 12
+          maxLength: 128
+          writeOnly: true
+    RoleUpdateRequest:
+      type: object
+      additionalProperties: false
+      required: [role]
+      properties:
+        role:
+          $ref: '#/components/schemas/Role'
+    AuthTokens:
+      type: object
+      additionalProperties: false
+      required: [tokenType, accessToken, refreshToken, accessExpiresAt]
+      properties:
+        tokenType:
+          type: string
+          const: Bearer
+        accessToken:
+          type: string
+          writeOnly: true
+        refreshToken:
+          type: string
+          writeOnly: true
+        accessExpiresAt:
+          type: string
+          format: date-time
+    UserProfile:
+      type: object
+      additionalProperties: false
+      required: [id, email, displayName, role, status, version]
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        displayName:
+          type: string
+        role:
+          $ref: '#/components/schemas/Role'
+        status:
+          type: string
+          enum: [ACTIVE, LOCKED, DISABLED]
+        version:
+          type: integer
+          format: int64
+          minimum: 0
+    Role:
+      type: string
+      enum: [CUSTOMER, COURIER, OPERATOR, ADMIN]
+    ApiError:
+      type: object
+      additionalProperties: false
+      required: [code, message, status, path, correlationId, traceId, timestamp]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        status:
+          type: integer
+          minimum: 400
+          maximum: 599
+        path:
+          type: string
+        correlationId:
+          type: string
+        traceId:
+          type: string
+          pattern: '^[0-9a-f]{32}$'
+        timestamp:
+          type: string
+          format: date-time

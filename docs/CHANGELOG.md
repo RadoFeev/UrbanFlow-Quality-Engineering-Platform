@@ -13,6 +13,7 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.
 - Shipment-service vertical slice with lifecycle policy, optimistic locking, idempotent creation, PostgreSQL/Flyway schema, status history, traceable HTTP API, and OpenAPI 3.1 contract.
 - Lease-safe transactional outbox publication with Spring Kafka, stable envelopes and ordering keys, broker acknowledgments, capped retry, bounded metrics, and 76 passing shipment unit cases.
 - Tracking-service Kafka projection with event/schema validation, monotonic idempotency, PostgreSQL timeline storage, resilient Redis cache-aside reads, public timeline API, and 36 passing unit cases.
+- Identity-service registration, bcrypt credentials, lockout, signed access tokens, rotating refresh sessions, single-use password reset, RBAC, optimistic role administration, and 80 passing unit cases.
 
 ## [0.1.0] - 2026-08-24
 

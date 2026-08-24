@@ -1,0 +1,53 @@
+spring:
+  application:
+    name: identity-service
+  datasource:
+    url: ${IDENTITY_DATABASE_URL:jdbc:postgresql://localhost:5432/urbanflow_identity}
+    username: ${IDENTITY_DATABASE_USER}
+    password: ${IDENTITY_DATABASE_PASSWORD}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: true
+
+urbanflow:
+  identity:
+    security:
+      issuer: ${IDENTITY_TOKEN_ISSUER:https://identity.urbanflow.local}
+      audience: ${IDENTITY_TOKEN_AUDIENCE:urbanflow-platform}
+      signing-secret: ${IDENTITY_SIGNING_SECRET}
+      access-ttl: ${IDENTITY_ACCESS_TTL:PT15M}
+      refresh-ttl: ${IDENTITY_REFRESH_TTL:P14D}
+      reset-ttl: ${IDENTITY_RESET_TTL:PT30M}
+      lockout-duration: ${IDENTITY_LOCKOUT_DURATION:PT15M}
+      maximum-login-attempts: ${IDENTITY_MAX_LOGIN_ATTEMPTS:5}
+    web:
+      allowed-origins: ${IDENTITY_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:3001,http://localhost:3002}
+
+server:
+  port: ${IDENTITY_SERVICE_PORT:8081}
+  shutdown: graceful
+  error:
+    include-message: never
+    include-stacktrace: never
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+logging:
+  pattern:
+    console: >-
+      %d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} level=%level service=identity-service
+      correlationId=%X{correlationId:-none} traceId=%X{traceId:-none} logger=%logger{36} message=%msg%n

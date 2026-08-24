@@ -4,8 +4,8 @@ This matrix is expanded with exact class names as suites are implemented. Curren
 
 | Requirement | Risk | Test level | Automated suite | Planned test class | CI workflow | State |
 |---|---|---|---|---|---|---|
-| Authentication and session lifecycle | R-05, R-06 | Component/API/UI/Security | identity, api, ui, security | `Authentication*Test` | api-tests, ui-tests, security-scan | Planned |
-| Role and permission enforcement | R-05 | Unit/API/UI/Security | identity, api, ui | `RoleBasedAccess*Test` | pull-request-checks, security-scan | Planned |
+| Authentication and session lifecycle | R-05, R-06 | Unit/Component/API/UI/Security | identity, api, ui, security | `AuthServiceTest`, `AccessTokenServiceTest`, `Authentication*Test` | api-tests, ui-tests, security-scan | Credential/token/lockout unit behavior implemented; cross-boundary levels planned |
+| Role and permission enforcement | R-05 | Unit/API/UI/Security | identity, api, ui | `RoleTest`, `BearerTokenFilterTest`, `RoleBasedAccess*Test` | pull-request-checks, security-scan | Role mapping and bearer-authority unit behavior implemented; HTTP levels planned |
 | Create shipment and validate parcel | R-01, R-02 | Unit/API/UI/E2E | shipment, api, ui, e2e | `CreateShipment*Test` | smoke-tests, api-tests, ui-tests | Planned |
 | Shipment transition policy | R-01, R-07 | Unit/API/Event/E2E | shipment, api, event, e2e | `ShipmentTransition*Test` | pull-request-checks, e2e-tests | Unit implemented; other levels planned |
 | Idempotent writes | R-02 | Unit/API/DB/Event | shipment, api, database, event | `ShipmentApplicationServiceTest`, `ShipmentIdempotency*Test` | api-tests, integration-tests | Unit orchestration implemented; other levels planned |
