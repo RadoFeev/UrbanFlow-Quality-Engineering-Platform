@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="UrbanFlow courier route portal">
+  <title>UrbanFlow Courier Portal</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#content">Skip to deliveries</a>
+  <header>
+    <div class="brand"><span aria-hidden="true">UF</span><div><strong>UrbanFlow</strong><small>Courier route console</small></div></div>
+    <div class="network"><span id="network-dot" aria-hidden="true"></span><strong id="network-label" data-testid="network-status">Online</strong><label class="switch"><input id="offline-toggle" data-testid="offline-toggle" type="checkbox"><span>Simulate offline</span></label></div>
+  </header>
+
+  <main id="content">
+    <section id="login-panel" class="login-panel" aria-labelledby="login-title">
+      <form id="login-form" class="panel" novalidate>
+        <p class="eyebrow">Secure courier access</p><h1 id="login-title">Start your shift</h1>
+        <label>Courier ID<input id="courier-id" data-testid="courier-id" inputmode="numeric" pattern="[0-9]{6}" required></label>
+        <label>Shift access code<input id="access-code" data-testid="access-code" type="password" minlength="8" autocomplete="current-password" required></label>
+        <button class="primary" data-testid="courier-login-submit" type="submit">Sign in</button>
+        <p id="login-message" class="message" data-testid="courier-login-message" role="alert"></p>
+      </form>
+    </section>
+
+    <section id="workspace" class="workspace hidden" aria-labelledby="workspace-title">
+      <div class="overview">
+        <div><p class="eyebrow">Today’s route</p><h1 id="workspace-title">Delivery run <span id="route-code">—</span></h1><p id="route-summary">Ready to begin.</p></div>
+        <div class="route-actions"><span id="queue-count" data-testid="offline-queue-count">0 queued</span><button id="sync" class="ghost" data-testid="sync-button" type="button">Sync now</button><button id="route-toggle" class="primary" data-testid="start-route" type="button">Start route</button><button id="logout" class="ghost" data-testid="courier-logout" type="button">Sign out</button></div>
+      </div>
+      <div class="toolbar"><label for="status-filter">Status</label><select id="status-filter" data-testid="assignment-filter"><option value="ALL">All assignments</option><option>COURIER_ASSIGNED</option><option>PICKUP_IN_PROGRESS</option><option>PICKED_UP</option><option>AT_ORIGIN_HUB</option><option>OUT_FOR_DELIVERY</option><option>DELIVERY_ATTEMPTED</option><option>DELIVERED</option></select><output id="visible-count">0 stops</output></div>
+      <div id="assignments" class="assignments" data-testid="assignment-list"></div>
+    </section>
+  </main>
+
+  <dialog id="update-dialog" data-testid="status-dialog">
+    <form id="update-form" method="dialog">
+      <button class="dialog-close" value="cancel" aria-label="Close">×</button>
+      <p class="eyebrow">Delivery update</p><h2 id="dialog-title">Update shipment</h2>
+      <input id="dialog-assignment-id" type="hidden">
+      <label>Next status<select id="next-status" data-testid="next-status" required></select></label>
+      <label id="reason-field" class="hidden">Reason<textarea id="failure-reason" data-testid="failure-reason" maxlength="500"></textarea></label>
+      <label id="proof-field" class="hidden">Delivery proof<input id="delivery-proof" data-testid="delivery-proof" type="file" accept="image/jpeg,image/png,application/pdf"></label>
+      <p id="update-message" class="message" role="alert"></p>
+      <div class="dialog-actions"><button class="ghost" value="cancel">Cancel</button><button id="save-update" class="primary" data-testid="save-status-update" value="default">Save update</button></div>
+    </form>
+  </dialog>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="/app.js" defer></script>
+</body>
+</html>

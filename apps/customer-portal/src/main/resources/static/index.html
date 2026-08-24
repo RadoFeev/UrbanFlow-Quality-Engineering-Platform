@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="UrbanFlow customer shipment portal">
+  <title>UrbanFlow Customer Portal</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to content</a>
+  <header class="topbar">
+    <a class="brand" href="#auth" data-testid="brand-link" aria-label="UrbanFlow home">
+      <span class="brand-mark" aria-hidden="true">UF</span>
+      <span><strong>UrbanFlow</strong><small>Customer portal</small></span>
+    </a>
+    <div class="header-actions">
+      <label class="compact-label" for="language">Language</label>
+      <select id="language" data-testid="language-select">
+        <option value="en">English</option>
+        <option value="bg">Български</option>
+      </select>
+      <button class="ghost" id="theme-toggle" data-testid="theme-toggle" type="button" aria-pressed="false">Dark mode</button>
+      <button class="ghost hidden" id="logout" data-testid="logout-button" type="button">Sign out</button>
+    </div>
+  </header>
+
+  <nav class="primary-nav" aria-label="Customer navigation">
+    <button type="button" data-view="auth" data-testid="nav-auth">Account</button>
+    <button type="button" data-view="create" data-protected="true" data-testid="nav-create">Create shipment</button>
+    <button type="button" data-view="shipments" data-protected="true" data-testid="nav-shipments">My shipments</button>
+    <button type="button" data-view="tracking" data-testid="nav-tracking">Track</button>
+    <button type="button" data-view="profile" data-protected="true" data-testid="nav-profile">Profile</button>
+    <button type="button" data-view="support" data-protected="true" data-testid="nav-support">Support</button>
+  </nav>
+
+  <main id="main-content" class="shell" tabindex="-1">
+    <section id="auth" class="view active" aria-labelledby="auth-title">
+      <div class="hero">
+        <div>
+          <p class="eyebrow">Deliver with confidence</p>
+          <h1 id="auth-title">Every parcel, clearly in view.</h1>
+          <p>Create deliveries, follow each milestone, and manage changes from one calm workspace.</p>
+        </div>
+        <div class="status-orbit" aria-hidden="true"><span>Created</span><span>In transit</span><span>Delivered</span></div>
+      </div>
+      <div class="auth-grid">
+        <form id="login-form" class="card" novalidate data-testid="login-form">
+          <h2>Sign in</h2>
+          <label for="login-email">Email</label>
+          <input id="login-email" data-testid="login-email" type="email" autocomplete="username" required>
+          <label for="login-password">Password</label>
+          <input id="login-password" data-testid="login-password" type="password" autocomplete="current-password" required>
+          <button class="primary" data-testid="login-submit" type="submit">Sign in</button>
+          <p id="login-message" class="form-message" data-testid="login-message" role="alert"></p>
+          <button class="text-button" data-view="reset" data-testid="forgot-password" type="button">Forgot password?</button>
+        </form>
+        <form id="registration-form" class="card" novalidate data-testid="registration-form">
+          <h2>Create account</h2>
+          <label for="register-name">Name</label>
+          <input id="register-name" data-testid="register-name" maxlength="100" autocomplete="name" required>
+          <label for="register-email">Email</label>
+          <input id="register-email" data-testid="register-email" type="email" autocomplete="email" required>
+          <label for="register-password">Password</label>
+          <input id="register-password" data-testid="register-password" type="password" minlength="12" autocomplete="new-password" aria-describedby="password-hint" required>
+          <small id="password-hint">At least 12 characters with upper, lower, number, and symbol.</small>
+          <button class="secondary" data-testid="register-submit" type="submit">Register</button>
+          <p id="registration-message" class="form-message" data-testid="registration-message" role="alert"></p>
+        </form>
+      </div>
+    </section>
+
+    <section id="reset" class="view narrow" aria-labelledby="reset-title">
+      <form id="reset-form" class="card" novalidate>
+        <p class="eyebrow">Account recovery</p>
+        <h1 id="reset-title">Reset your password</h1>
+        <label for="reset-email">Email</label>
+        <input id="reset-email" data-testid="reset-email" type="email" required>
+        <button class="primary" data-testid="reset-submit" type="submit">Send reset link</button>
+        <p id="reset-message" class="form-message" data-testid="reset-message" role="status"></p>
+      </form>
+    </section>
+
+    <section id="create" class="view" aria-labelledby="create-title">
+      <div class="section-heading"><div><p class="eyebrow">New delivery</p><h1 id="create-title">Create a shipment</h1></div><output id="estimate" data-testid="delivery-estimate">Estimated delivery: —</output></div>
+      <form id="shipment-form" class="card form-grid" novalidate data-testid="shipment-form">
+        <label>Pickup address<input data-testid="pickup-address" maxlength="200" required></label>
+        <label>Delivery address<input data-testid="delivery-address" maxlength="200" required></label>
+        <label>Recipient phone<input data-testid="recipient-phone" inputmode="tel" placeholder="+359..." required></label>
+        <label>Delivery type<select data-testid="delivery-type"><option value="STANDARD">Standard</option><option value="EXPRESS">Express</option><option value="SAME_DAY">Same day</option></select></label>
+        <fieldset><legend>Parcel</legend><div class="parcel-grid">
+          <label>Weight (kg)<input data-testid="parcel-weight" type="number" min="0.1" max="50" step="0.1" required></label>
+          <label>Length (cm)<input data-testid="parcel-length" type="number" min="1" max="200" required></label>
+          <label>Width (cm)<input data-testid="parcel-width" type="number" min="1" max="200" required></label>
+          <label>Height (cm)<input data-testid="parcel-height" type="number" min="1" max="200" required></label>
+        </div></fieldset>
+        <label class="full">Contents description<input data-testid="parcel-description" maxlength="160" required></label>
+        <div class="full actions"><button class="primary" data-testid="create-shipment-submit" type="submit">Create shipment</button><button class="ghost" type="reset">Clear</button></div>
+        <p id="shipment-message" class="form-message full" data-testid="shipment-message" role="alert"></p>
+      </form>
+    </section>
+
+    <section id="shipments" class="view" aria-labelledby="shipments-title">
+      <div class="section-heading"><div><p class="eyebrow">Delivery workspace</p><h1 id="shipments-title">My shipments</h1></div><select id="shipment-filter" data-testid="shipment-status-filter" aria-label="Filter shipments"><option value="ALL">All statuses</option><option>CREATED</option><option>CONFIRMED</option><option>IN_TRANSIT</option><option>DELIVERED</option><option>CANCELLED</option></select></div>
+      <div id="shipment-list" class="card-list" data-testid="shipment-list"></div>
+    </section>
+
+    <section id="tracking" class="view" aria-labelledby="tracking-title">
+      <div class="tracking-search"><div><p class="eyebrow">Public tracking</p><h1 id="tracking-title">Follow a shipment</h1></div><form id="tracking-form"><label for="tracking-number">Tracking number</label><div class="inline"><input id="tracking-number" data-testid="tracking-number" pattern="UF-[A-Z0-9]{8}" required><button class="primary" data-testid="track-submit" type="submit">Track</button></div></form></div>
+      <p id="tracking-message" class="form-message" data-testid="tracking-message" role="alert"></p>
+      <div id="tracking-result" class="timeline" data-testid="tracking-result" aria-live="polite"></div>
+    </section>
+
+    <section id="profile" class="view" aria-labelledby="profile-title">
+      <div class="section-heading"><div><p class="eyebrow">Account</p><h1 id="profile-title">Profile and addresses</h1></div></div>
+      <div class="two-column">
+        <form id="profile-form" class="card"><h2>Profile</h2><label>Name<input id="profile-name" data-testid="profile-name" maxlength="100" required></label><label>Email<input id="profile-email" data-testid="profile-email" type="email" readonly></label><button class="primary" data-testid="profile-save" type="submit">Save profile</button><p id="profile-message" class="form-message" role="status"></p></form>
+        <div class="card"><h2>Address book</h2><form id="address-form"><label>Label<input data-testid="address-label" maxlength="40" required></label><label>Address<input data-testid="address-value" maxlength="200" required></label><button class="secondary" data-testid="address-add" type="submit">Add address</button></form><ul id="address-list" class="clean-list" data-testid="address-list"></ul></div>
+      </div>
+    </section>
+
+    <section id="support" class="view narrow" aria-labelledby="support-title">
+      <form id="incident-form" class="card" novalidate><p class="eyebrow">Customer support</p><h1 id="support-title">Report a delivery issue</h1><label>Shipment<select id="incident-shipment" data-testid="incident-shipment" required></select></label><label>Issue type<select data-testid="incident-type"><option>DELAY</option><option>DAMAGE</option><option>ADDRESS</option><option>OTHER</option></select></label><label>Description<textarea data-testid="incident-description" maxlength="1000" required></textarea></label><button class="primary" data-testid="incident-submit" type="submit">Submit report</button><p id="incident-message" class="form-message" role="status"></p></form>
+    </section>
+  </main>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="/app.js" defer></script>
+</body>
+</html>

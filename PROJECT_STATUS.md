@@ -79,6 +79,14 @@ The warehouse service currently implements:
 - Transactional append-only audit records for every state-changing operation.
 - PostgreSQL constraints and indexes, Flyway migration, health/Prometheus endpoints, and OpenAPI 3.1 contract.
 
+The application layer currently implements:
+
+- Independently executable customer, courier, and operations Spring Boot web applications.
+- Responsive desktop, tablet, and mobile layouts with skip links, focus styling, reduced-motion handling, semantic forms, live regions, and stable `data-testid` locators.
+- Customer registration/login/reset, profile/address book, shipment validation/creation/list/tracking/cancellation/address change, language/theme, and incident reporting flows.
+- Courier assignment filtering, route lifecycle, centralized status transitions, required failure reasons and delivery proof, offline update queues, and synchronization.
+- Operations RBAC, shipment search/sort/filter/pagination/CSV export, manual versioned commands, user roles, couriers, hubs, incidents, flags, audit history, and problem-delivery metrics.
+
 ## Completed Phase 1 work
 
 - Analyzed the initially empty workspace and initialized Git on `main`.
@@ -94,7 +102,7 @@ The warehouse service currently implements:
 
 | Suite | Implemented behavior tests | Required final target |
 |---|---:|---:|
-| Product/domain unit | 330 | Risk-driven, no fixed final quota |
+| Product/domain unit and asset contract | 345 | Risk-driven, no fixed final quota |
 | UI | 0 | 60 |
 | API | 0 | 100 |
 | Component | 0 | 25 |
@@ -163,12 +171,16 @@ Zero is intentional at this milestone. Architecture-only tests would not verify 
 | Warehouse quality profile | Passed: Spotless clean, Checkstyle 0, SpotBugs 0 |
 | Warehouse JaCoCo line coverage | Passed: 52.94% against current 40% milestone gate |
 | Warehouse OpenAPI lint | Passed: Redocly CLI 2.47.0, 0 warnings |
+| Portal JavaScript syntax | Passed: Node syntax validation for all 3 applications |
+| Portal asset contract tests | Passed: 15 tests, 0 failures/errors/skips |
+| Portal packaging | Passed: 3 executable Spring Boot jars |
+| Portal quality profile | Passed: Spotless clean, Checkstyle 0, SpotBugs 0, JaCoCo gate met |
 | Docker Compose validation | Not runnable: Docker is not installed |
 | Kubernetes/Helm validation | Not runnable: kubectl and Helm are not installed |
 
 ## Known limitations
 
-- All UI applications are not implemented yet.
+- Portal flows currently use isolated browser storage; service-backed gateway integration is still required before distributed end-to-end execution.
 - Shipment persistence/migration startup and API behavior have not been container-tested because Docker is unavailable on this machine.
 - Kafka broker delivery, lease recovery, and PostgreSQL `SKIP LOCKED` behavior are unit-tested but not yet verified against real containers because Docker is unavailable.
 - Concurrent first-use races for the same idempotency key require the planned PostgreSQL integration test and conflict-normalization hardening.
@@ -180,7 +192,7 @@ Zero is intentional at this milestone. Architecture-only tests would not verify 
 
 ## Next milestone
 
-Milestone 2 continues with notification, warehouse, shared service authorization, and minimum responsive portals, followed by container-backed validation when a Docker runtime is available.
+Milestone 2 continues with shared service authorization and service-backed portal adapters, followed by container-backed validation when a Docker runtime is available.
 
 ## Exact commands
 
@@ -196,6 +208,7 @@ With JDK 25 on `JAVA_HOME`:
 .\mvnw.cmd -pl :routing-service -Pquality clean verify
 .\mvnw.cmd -pl :notification-service,:shipment-service -am -Pquality clean verify
 .\mvnw.cmd -pl :warehouse-service -Pquality clean verify
+.\mvnw.cmd -pl :customer-portal,:courier-portal,:operations-dashboard -am -Pquality clean verify
 ```
 
 Portable validation toolchain used on this machine:

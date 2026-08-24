@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="UrbanFlow operations dashboard">
+  <title>UrbanFlow Operations</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to dashboard</a>
+  <aside class="sidebar" aria-label="Operations navigation">
+    <div class="brand"><span aria-hidden="true">UF</span><div><strong>UrbanFlow</strong><small>Operations</small></div></div>
+    <nav>
+      <button data-panel="overview" data-testid="ops-nav-overview" type="button">Overview</button>
+      <button data-panel="shipments" data-testid="ops-nav-shipments" type="button">Shipments</button>
+      <button data-panel="users" data-testid="ops-nav-users" data-permission="ADMIN" type="button">Users & roles</button>
+      <button data-panel="network" data-testid="ops-nav-network" type="button">Couriers & hubs</button>
+      <button data-panel="incidents" data-testid="ops-nav-incidents" type="button">Incidents</button>
+      <button data-panel="flags" data-testid="ops-nav-flags" data-permission="ADMIN" type="button">Feature flags</button>
+      <button data-panel="audit" data-testid="ops-nav-audit" type="button">Audit log</button>
+    </nav>
+    <div class="operator"><span id="operator-badge">—</span><div><strong id="operator-name">Not signed in</strong><small id="operator-role">—</small></div><button id="ops-logout" class="icon-button" data-testid="ops-logout" aria-label="Sign out" type="button">↪</button></div>
+  </aside>
+
+  <header class="mobile-header"><button id="menu-toggle" aria-expanded="false" aria-controls="sidebar" type="button">Menu</button><strong>UrbanFlow Operations</strong></header>
+  <main id="main" tabindex="-1">
+    <section id="login" class="login active" aria-labelledby="login-title">
+      <form id="ops-login-form" class="card login-card" novalidate>
+        <p class="eyebrow">Restricted operations</p><h1 id="login-title">Control center access</h1>
+        <label>Operator ID<input id="operator-id" data-testid="operator-id" pattern="[A-Z]{2}-[0-9]{4}" placeholder="OP-0001" required></label>
+        <label>Access code<input id="operator-code" data-testid="operator-code" type="password" minlength="10" required></label>
+        <label>Workspace role<select id="workspace-role" data-testid="workspace-role"><option>OPERATOR</option><option>ADMIN</option><option>VIEWER</option></select></label>
+        <button class="primary" data-testid="ops-login-submit" type="submit">Enter dashboard</button>
+        <p id="ops-login-message" class="message" data-testid="ops-login-message" role="alert"></p>
+      </form>
+    </section>
+
+    <section id="overview" class="panel" aria-labelledby="overview-title">
+      <div class="page-heading"><div><p class="eyebrow">Network pulse</p><h1 id="overview-title">Good morning, operations.</h1><p>Live delivery health across the UrbanFlow network.</p></div><time id="dashboard-time"></time></div>
+      <div class="metrics">
+        <article><span>Active shipments</span><strong id="metric-active" data-testid="metric-active">0</strong><small>Across all hubs</small></article>
+        <article><span>On-time rate</span><strong id="metric-ontime">0%</strong><small>Rolling 24 hours</small></article>
+        <article><span>Open incidents</span><strong id="metric-incidents">0</strong><small>Require attention</small></article>
+        <article><span>Couriers online</span><strong id="metric-couriers">0</strong><small>Available or assigned</small></article>
+      </div>
+      <div class="dashboard-grid"><article class="card"><h2>Shipment distribution</h2><div id="status-chart" class="bar-chart" aria-label="Shipments by status"></div></article><article class="card"><h2>Problem deliveries</h2><div id="problem-list" data-testid="problem-deliveries"></div></article></div>
+    </section>
+
+    <section id="shipments" class="panel" aria-labelledby="shipments-title">
+      <div class="page-heading"><div><p class="eyebrow">Fleet visibility</p><h1 id="shipments-title">All shipments</h1></div><button id="export-csv" class="secondary" data-testid="export-csv" type="button">Export CSV</button></div>
+      <div class="filters card"><label>Search<input id="shipment-search" data-testid="ops-shipment-search" type="search" placeholder="Tracking or city"></label><label>Status<select id="ops-status-filter" data-testid="ops-status-filter"><option value="ALL">All</option><option>CONFIRMED</option><option>COURIER_ASSIGNED</option><option>IN_TRANSIT</option><option>OUT_FOR_DELIVERY</option><option>DELIVERED</option><option>DELIVERY_ATTEMPTED</option></select></label><label>Sort<select id="shipment-sort" data-testid="shipment-sort"><option value="created-desc">Newest</option><option value="created-asc">Oldest</option><option value="tracking-asc">Tracking A–Z</option><option value="status-asc">Status A–Z</option></select></label></div>
+      <div class="table-wrap card"><table><thead><tr><th>Tracking</th><th>Status</th><th>Route</th><th>Updated</th><th>Version</th><th><span class="visually-hidden">Actions</span></th></tr></thead><tbody id="shipments-body" data-testid="ops-shipment-table"></tbody></table></div>
+      <div class="pagination"><button id="previous-page" data-testid="previous-page" type="button">Previous</button><output id="page-status" data-testid="page-status">Page 1</output><button id="next-page" data-testid="next-page" type="button">Next</button></div>
+    </section>
+
+    <section id="users" class="panel" aria-labelledby="users-title">
+      <div class="page-heading"><div><p class="eyebrow">Identity governance</p><h1 id="users-title">Users and roles</h1></div></div>
+      <div class="table-wrap card"><table><thead><tr><th>User</th><th>Role</th><th>State</th><th>Version</th><th>Action</th></tr></thead><tbody id="users-body" data-testid="users-table"></tbody></table></div><p id="users-message" class="message" role="status"></p>
+    </section>
+
+    <section id="network" class="panel" aria-labelledby="network-title">
+      <div class="page-heading"><div><p class="eyebrow">Network resources</p><h1 id="network-title">Couriers and hubs</h1></div></div>
+      <div class="dashboard-grid"><article class="card"><h2>Couriers</h2><div id="courier-list" class="resource-list" data-testid="courier-list"></div></article><article class="card"><h2>Logistics hubs</h2><div id="hub-list" class="resource-list" data-testid="hub-list"></div></article></div>
+    </section>
+
+    <section id="incidents" class="panel" aria-labelledby="incidents-title">
+      <div class="page-heading"><div><p class="eyebrow">Exception management</p><h1 id="incidents-title">Delivery incidents</h1></div><select id="incident-filter" data-testid="incident-filter"><option>OPEN</option><option>RESOLVED</option><option>ALL</option></select></div>
+      <div id="incident-list" class="card-list" data-testid="incident-list"></div>
+    </section>
+
+    <section id="flags" class="panel" aria-labelledby="flags-title">
+      <div class="page-heading"><div><p class="eyebrow">Controlled rollout</p><h1 id="flags-title">Feature flags</h1></div></div>
+      <div id="flag-list" class="card-list" data-testid="feature-flag-list"></div>
+    </section>
+
+    <section id="audit" class="panel" aria-labelledby="audit-title">
+      <div class="page-heading"><div><p class="eyebrow">Accountability</p><h1 id="audit-title">Audit log</h1></div><input id="audit-search" data-testid="audit-search" type="search" aria-label="Search audit log" placeholder="Action or entity"></div>
+      <div class="table-wrap card"><table><thead><tr><th>Time</th><th>Actor</th><th>Action</th><th>Entity</th><th>Details</th></tr></thead><tbody id="audit-body" data-testid="audit-table"></tbody></table></div>
+    </section>
+  </main>
+
+  <dialog id="status-dialog">
+    <form id="manual-status-form" method="dialog"><button class="dialog-close" value="cancel" aria-label="Close">×</button><p class="eyebrow">Versioned command</p><h2>Manual status change</h2><input id="manual-shipment-id" type="hidden"><label>Current version<input id="manual-version" data-testid="manual-version" type="number" readonly></label><label>New status<select id="manual-status" data-testid="manual-status"><option>CONFIRMED</option><option>IN_TRANSIT</option><option>OUT_FOR_DELIVERY</option><option>DELIVERED</option><option>CANCELLED</option></select></label><label>Reason<textarea id="manual-reason" data-testid="manual-reason" maxlength="500" required></textarea></label><label class="checkbox"><input id="simulate-conflict" data-testid="simulate-conflict" type="checkbox">Simulate concurrent update</label><p id="manual-message" class="message" role="alert"></p><div class="dialog-actions"><button value="cancel" type="submit">Cancel</button><button class="primary" data-testid="manual-status-submit" value="default" type="submit">Apply change</button></div></form>
+  </dialog>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="/app.js" defer></script>
+</body>
+</html>
