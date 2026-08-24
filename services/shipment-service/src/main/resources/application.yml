@@ -1,0 +1,48 @@
+spring:
+  application:
+    name: shipment-service
+  datasource:
+    url: ${URBANFLOW_DB_URL:jdbc:postgresql://localhost:5432/urbanflow}
+    username: ${URBANFLOW_DB_USERNAME}
+    password: ${URBANFLOW_DB_PASSWORD}
+    hikari:
+      maximum-pool-size: ${URBANFLOW_DB_POOL_SIZE:10}
+      connection-timeout: 3000
+  flyway:
+    enabled: true
+    validate-migration-naming: true
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+        order_inserts: true
+        order_updates: true
+
+server:
+  port: ${URBANFLOW_SHIPMENT_PORT:8082}
+  shutdown: graceful
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: when_authorized
+
+springdoc:
+  api-docs:
+    path: /openapi
+  swagger-ui:
+    path: /swagger-ui
+
+logging:
+  pattern:
+    level: "%5p [correlationId=%X{correlationId:-} traceId=%X{traceId:-}]"

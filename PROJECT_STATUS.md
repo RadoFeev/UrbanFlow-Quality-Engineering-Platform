@@ -4,7 +4,7 @@
 
 **Status date:** 2026-08-24
 
-**Current milestone:** Milestone 1 complete; Milestone 2 not started
+**Current milestone:** Milestone 1 complete; Milestone 2 in progress
 
 ## Implemented modules
 
@@ -15,7 +15,21 @@ The Maven reactor and parent relationships are implemented for:
 - `test-core`, `test-data`, `test-orchestrator`.
 - UI, API, contract, component, integration, event, database, end-to-end, accessibility, visual, performance, and security suites.
 
-These modules currently establish the executable build boundary only. Product and test source code begins in Milestone 2 and Milestone 3; no placeholder classes or empty tests have been added.
+Most modules currently establish the executable build boundary only. `shipment-service` now contains the first Phase 2 vertical slice; no placeholder classes or empty tests have been added.
+
+## Phase 2 progress
+
+The shipment service currently implements:
+
+- Spring Boot 4.1.1 executable service packaging and health/Prometheus endpoints.
+- Versioned OpenAPI 3.1 contract for create, read, track, transition, and delivery-address operations.
+- All 14 shipment statuses with one authoritative transition and actor-permission policy.
+- Required reasons for cancellation, failed delivery, and return; required delivery proof for delivery.
+- UUID aggregate identity, tracking numbers, optimistic version checks, and address-change cutoff.
+- Idempotent creation with a deterministic request fingerprint and original-result replay.
+- PostgreSQL/Flyway schema with constraints, indexes, soft-delete field, history, idempotency, and outbox tables.
+- Transactional status history and event outbox staging with correlation and trace identifiers.
+- Stable error envelope plus validated/replaced correlation and W3C trace identifiers.
 
 ## Completed Phase 1 work
 
@@ -32,6 +46,7 @@ These modules currently establish the executable build boundary only. Product an
 
 | Suite | Implemented behavior tests | Required final target |
 |---|---:|---:|
+| Product/domain unit | 48 | Risk-driven, no fixed final quota |
 | UI | 0 | 60 |
 | API | 0 | 100 |
 | Component | 0 | 25 |
@@ -58,18 +73,26 @@ Zero is intentional at this milestone. Architecture-only tests would not verify 
 | Maven reactor model / effective POM | Passed |
 | `mvn clean verify` | Passed: 27-project reactor, 21.448 s |
 | `mvn -Pquality clean verify` | Passed: Enforcer, Spotless, Checkstyle (0 violations), SpotBugs; 1:33 min |
+| Post-slice full-reactor `mvn -Pquality clean verify` | Passed: 27/27 projects, 48 tests, all quality gates; 39.353 s |
 | Effective dependency versions | Passed: JUnit 6.1.3, Selenium 4.47.0, REST Assured 6.0.1, Testcontainers 2.0.5, Jackson 3.2.2, OpenTelemetry 1.65.0 |
 | POM XML validation | Passed: 27 files |
 | Governance YAML parse | Passed: 3 files |
 | Internal Markdown links | Passed |
 | Forbidden-pattern and credential signature scan | Passed |
 | Git whitespace validation | Passed |
+| Shipment service compile/package | Passed: 40 production classes, executable Spring Boot jar |
+| Shipment unit tests | Passed: 48 tests, 0 failures/errors/skips |
+| Shipment quality profile | Passed: Spotless clean, Checkstyle 0, SpotBugs 0 |
+| Shipment JaCoCo line coverage | Passed: 61.80% against current 40% milestone gate |
+| Shipment OpenAPI lint | Passed: Redocly CLI 2.47.0, 0 warnings |
 | Docker Compose validation | Not runnable: Docker is not installed |
 | Kubernetes/Helm validation | Not runnable: kubectl and Helm are not installed |
 
 ## Known limitations
 
-- Demo services and UI applications are not implemented yet.
+- Identity, tracking, routing, notification, and warehouse services and all UI applications are not implemented yet.
+- Shipment persistence/migration startup and API behavior have not been container-tested because Docker is unavailable on this machine.
+- Concurrent first-use races for the same idempotency key require the planned PostgreSQL integration test and conflict-normalization hardening.
 - Test Core and behavior suites are not implemented yet.
 - Docker, CI workflows, Kubernetes, Helm, and dashboards are scheduled for Milestone 8.
 - The checked machine requires the portable JDK used during validation or a separately installed JDK 25.
@@ -77,7 +100,7 @@ Zero is intentional at this milestone. Architecture-only tests would not verify 
 
 ## Next milestone
 
-Milestone 2 begins with shared service conventions, identity and shipment vertical slices, Flyway migrations, PostgreSQL persistence, the transactional outbox, Kafka event envelopes, Redis-backed concerns, OpenAPI, and minimum responsive portals.
+Milestone 2 continues with PostgreSQL container validation and API tests for the shipment slice, outbox-to-Kafka publication, then shared service conventions, identity, tracking, routing, notification, warehouse, Redis-backed concerns, and minimum responsive portals.
 
 ## Exact commands
 
@@ -85,7 +108,9 @@ With JDK 25 on `JAVA_HOME`:
 
 ```powershell
 .\mvnw.cmd clean verify
+.\mvnw.cmd -Pquality clean verify
 .\mvnw.cmd help:effective-pom -Doutput=target/effective-pom.xml
+.\mvnw.cmd -pl :shipment-service -am -Pquality clean verify
 ```
 
 Portable validation toolchain used on this machine:

@@ -2,7 +2,7 @@
 
 UrbanFlow is a production-style quality engineering monorepo for a distributed courier and logistics platform. It combines realistic customer, courier, and operations applications with independent services and a reusable automation platform spanning UI, API, contracts, components, integrations, events, databases, end-to-end flows, accessibility, visual regression, performance, and security.
 
-> **Delivery status:** Phase 1 (architecture and executable repository foundation) is complete. Application code and executable product tests are delivered incrementally according to [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md). The current verified scope is recorded in [PROJECT_STATUS.md](PROJECT_STATUS.md).
+> **Delivery status:** Phase 1 (architecture and executable repository foundation) is complete. Phase 2 is underway with a compiled and unit-tested shipment-service vertical slice. Remaining application code and product tests are delivered incrementally according to [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md). The current verified scope is recorded in [PROJECT_STATUS.md](PROJECT_STATUS.md).
 
 ## Business domain
 

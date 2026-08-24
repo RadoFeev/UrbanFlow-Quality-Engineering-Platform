@@ -1,0 +1,369 @@
+openapi: 3.1.0
+info:
+  title: UrbanFlow Shipment Service API
+  version: 0.1.0
+  description: Versioned shipment creation, tracking, lifecycle, and address operations.
+  license:
+    name: MIT
+    identifier: MIT
+servers:
+  - url: https://{host}:{port}
+    variables:
+      host:
+        default: shipment.urbanflow.test
+      port:
+        default: '443'
+security: []
+paths:
+  /api/v1/shipments:
+    post:
+      operationId: createShipment
+      summary: Create a shipment idempotently
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/CorrelationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateShipmentRequest'
+      responses:
+        '201':
+          description: Shipment created or original idempotent result returned
+          headers:
+            ETag:
+              schema:
+                type: string
+            X-Correlation-ID:
+              schema:
+                type: string
+            X-Trace-ID:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Shipment'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /api/v1/shipments/{shipmentId}:
+    get:
+      operationId: getShipment
+      summary: Get a shipment by UUID
+      parameters:
+        - $ref: '#/components/parameters/ShipmentId'
+        - $ref: '#/components/parameters/CorrelationId'
+      responses:
+        '200':
+          $ref: '#/components/responses/ShipmentResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/v1/tracking/{trackingNumber}:
+    get:
+      operationId: trackShipment
+      summary: Get a shipment by tracking number
+      parameters:
+        - name: trackingNumber
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^UF[0-9A-F]{18}$'
+        - $ref: '#/components/parameters/CorrelationId'
+      responses:
+        '200':
+          $ref: '#/components/responses/ShipmentResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/v1/shipments/{shipmentId}/transitions:
+    post:
+      operationId: transitionShipment
+      summary: Apply one legal lifecycle transition
+      parameters:
+        - $ref: '#/components/parameters/ShipmentId'
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/CorrelationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransitionShipmentRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/ShipmentResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /api/v1/shipments/{shipmentId}/delivery-address:
+    put:
+      operationId: changeDeliveryAddress
+      summary: Change the delivery address before pickup
+      parameters:
+        - $ref: '#/components/parameters/ShipmentId'
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/CorrelationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [deliveryAddress]
+              properties:
+                deliveryAddress:
+                  $ref: '#/components/schemas/Address'
+      responses:
+        '200':
+          $ref: '#/components/responses/ShipmentResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+components:
+  parameters:
+    ShipmentId:
+      name: shipmentId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema:
+        type: string
+        minLength: 8
+        maxLength: 200
+        pattern: '^[A-Za-z0-9][A-Za-z0-9._:-]{7,199}$'
+    IfMatch:
+      name: If-Match
+      in: header
+      required: true
+      schema:
+        type: string
+      description: Numeric aggregate version, optionally represented as an HTTP entity tag.
+    CorrelationId:
+      name: X-Correlation-ID
+      in: header
+      required: false
+      schema:
+        type: string
+        maxLength: 64
+  responses:
+    ShipmentResponse:
+      description: Current shipment representation
+      headers:
+        ETag:
+          schema:
+            type: string
+        X-Correlation-ID:
+          schema:
+            type: string
+        X-Trace-ID:
+          schema:
+            type: string
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Shipment'
+    BadRequest:
+      description: Malformed or invalid request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+    NotFound:
+      description: Shipment not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+    Conflict:
+      description: State, version, address-cutoff, or idempotency conflict
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+  schemas:
+    CreateShipmentRequest:
+      type: object
+      required: [customerId, pickupAddress, deliveryAddress, parcel, deliveryType]
+      properties:
+        customerId:
+          type: string
+          format: uuid
+        pickupAddress:
+          $ref: '#/components/schemas/Address'
+        deliveryAddress:
+          $ref: '#/components/schemas/Address'
+        parcel:
+          $ref: '#/components/schemas/Parcel'
+        deliveryType:
+          $ref: '#/components/schemas/DeliveryType'
+    TransitionShipmentRequest:
+      type: object
+      required: [targetStatus, actor]
+      properties:
+        targetStatus:
+          $ref: '#/components/schemas/ShipmentStatus'
+        actor:
+          type: string
+          enum: [CUSTOMER, COURIER, WAREHOUSE_OPERATOR, ROUTING_SERVICE, SYSTEM, OPERATIONS]
+        reason:
+          type: string
+          maxLength: 500
+        deliveryProofId:
+          type: string
+          format: uuid
+    Shipment:
+      type: object
+      required:
+        - id
+        - customerId
+        - trackingNumber
+        - status
+        - deliveryType
+        - pickupAddress
+        - deliveryAddress
+        - parcel
+        - version
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        customerId:
+          type: string
+          format: uuid
+        trackingNumber:
+          type: string
+          pattern: '^UF[0-9A-F]{18}$'
+        status:
+          $ref: '#/components/schemas/ShipmentStatus'
+        deliveryType:
+          $ref: '#/components/schemas/DeliveryType'
+        pickupAddress:
+          $ref: '#/components/schemas/Address'
+        deliveryAddress:
+          $ref: '#/components/schemas/Address'
+        parcel:
+          $ref: '#/components/schemas/Parcel'
+        version:
+          type: integer
+          format: int64
+          minimum: 0
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    ShipmentStatus:
+      type: string
+      enum:
+        - CREATED
+        - CONFIRMED
+        - COURIER_ASSIGNED
+        - PICKUP_IN_PROGRESS
+        - PICKED_UP
+        - AT_ORIGIN_HUB
+        - IN_TRANSIT
+        - AT_DESTINATION_HUB
+        - OUT_FOR_DELIVERY
+        - DELIVERY_ATTEMPTED
+        - DELIVERED
+        - CANCELLED
+        - RETURN_IN_PROGRESS
+        - RETURNED
+    DeliveryType:
+      type: string
+      enum: [STANDARD, EXPRESS, SAME_DAY]
+    Address:
+      type: object
+      required: [contactName, line1, city, postalCode, countryCode, phone]
+      properties:
+        contactName:
+          type: string
+          maxLength: 120
+        line1:
+          type: string
+          maxLength: 160
+        line2:
+          type: [string, 'null']
+          maxLength: 160
+        city:
+          type: string
+          maxLength: 100
+        postalCode:
+          type: string
+          maxLength: 20
+        countryCode:
+          type: string
+          pattern: '^[A-Z]{2}$'
+        phone:
+          type: string
+          pattern: '^\+[1-9][0-9]{7,14}$'
+    Parcel:
+      type: object
+      required: [weightGrams, lengthCm, widthCm, heightCm, description]
+      properties:
+        weightGrams:
+          type: integer
+          minimum: 1
+          maximum: 50000
+        lengthCm:
+          type: integer
+          minimum: 1
+          maximum: 200
+        widthCm:
+          type: integer
+          minimum: 1
+          maximum: 200
+        heightCm:
+          type: integer
+          minimum: 1
+          maximum: 200
+        description:
+          type: string
+          maxLength: 240
+    ApiError:
+      type: object
+      required: [code, message, status, path, timestamp, correlationId, traceId, violations]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        status:
+          type: integer
+        path:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        correlationId:
+          type: string
+        traceId:
+          type: string
+        violations:
+          type: array
+          items:
+            type: object
+            required: [field, message]
+            properties:
+              field:
+                type: string
+              message:
+                type: string
