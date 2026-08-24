@@ -34,7 +34,7 @@ Failures release the lease with capped exponential backoff. Stored and logged fa
 Set `URBANFLOW_DB_USERNAME` and `URBANFLOW_DB_PASSWORD`; optionally set `URBANFLOW_DB_URL`, `URBANFLOW_KAFKA_BOOTSTRAP_SERVERS`, `URBANFLOW_SHIPMENT_EVENTS_TOPIC`, and `URBANFLOW_SHIPMENT_PORT`. Publication can be paused with `URBANFLOW_OUTBOX_ENABLED=false` while retaining durable pending rows. Then run:
 
 ```bash
-java -jar services/shipment-service/target/shipment-service-0.1.0.jar
+java -jar services/shipment-service/target/shipment-service-0.1.0-exec.jar
 ```
 
 Readiness is exposed at `/actuator/health/readiness`, Prometheus metrics at `/actuator/prometheus`, generated OpenAPI at `/openapi`, and Swagger UI at `/swagger-ui`.

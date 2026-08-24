@@ -14,9 +14,13 @@ servers:
       port:
         default: '443'
 security: []
+tags:
+  - name: Tracking
+    description: Public shipment timeline projection.
 paths:
   /api/v1/tracking/{trackingNumber}:
     get:
+      tags: [Tracking]
       operationId: getTrackingTimeline
       summary: Return an ordered public shipment timeline
       parameters:

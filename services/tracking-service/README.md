@@ -18,7 +18,7 @@ From the repository root with JDK 25:
 
 ```bash
 ./mvnw -pl :tracking-service -am -Pquality clean verify
-java -jar services/tracking-service/target/tracking-service-0.1.0.jar
+java -jar services/tracking-service/target/tracking-service-0.1.0-exec.jar
 ```
 
 The reviewed HTTP contract is [tracking-service.yaml](src/main/resources/openapi/tracking-service.yaml). Real broker/database/cache validation requires the integration profile delivered with the infrastructure milestone.

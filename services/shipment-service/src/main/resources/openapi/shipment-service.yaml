@@ -14,9 +14,15 @@ servers:
       port:
         default: '443'
 security: []
+tags:
+  - name: Shipments
+    description: Shipment creation, lifecycle, and address ownership.
+  - name: Tracking
+    description: Shipment-owned tracking lookup.
 paths:
   /api/v1/shipments:
     post:
+      tags: [Shipments]
       operationId: createShipment
       summary: Create a shipment idempotently
       parameters:
@@ -51,6 +57,7 @@ paths:
           $ref: '#/components/responses/Conflict'
   /api/v1/shipments/{shipmentId}:
     get:
+      tags: [Shipments]
       operationId: getShipment
       summary: Get a shipment by UUID
       parameters:
@@ -63,6 +70,7 @@ paths:
           $ref: '#/components/responses/NotFound'
   /api/v1/tracking/{trackingNumber}:
     get:
+      tags: [Tracking]
       operationId: trackShipment
       summary: Get a shipment by tracking number
       parameters:
@@ -80,6 +88,7 @@ paths:
           $ref: '#/components/responses/NotFound'
   /api/v1/shipments/{shipmentId}/transitions:
     post:
+      tags: [Shipments]
       operationId: transitionShipment
       summary: Apply one legal lifecycle transition
       parameters:
@@ -103,6 +112,7 @@ paths:
           $ref: '#/components/responses/Conflict'
   /api/v1/shipments/{shipmentId}/delivery-address:
     put:
+      tags: [Shipments]
       operationId: changeDeliveryAddress
       summary: Change the delivery address before pickup
       parameters:

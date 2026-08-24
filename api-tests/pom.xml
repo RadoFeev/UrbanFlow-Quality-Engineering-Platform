@@ -1,2 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"><modelVersion>4.0.0</modelVersion><parent><groupId>io.urbanflow.quality</groupId><artifactId>urbanflow-quality-platform</artifactId><version>0.1.0</version></parent><artifactId>api-tests</artifactId></project>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent><groupId>io.urbanflow.quality</groupId><artifactId>urbanflow-quality-platform</artifactId><version>0.1.0</version></parent>
+    <artifactId>api-tests</artifactId>
+    <name>UrbanFlow API Tests</name>
+    <dependencies>
+        <dependency><groupId>io.urbanflow.quality</groupId><artifactId>test-core</artifactId><version>${project.version}</version><scope>test</scope></dependency>
+        <dependency><groupId>io.urbanflow.quality</groupId><artifactId>test-data</artifactId><version>${project.version}</version><scope>test</scope></dependency>
+        <dependency><groupId>io.urbanflow.quality</groupId><artifactId>identity-service</artifactId><version>${project.version}</version><scope>test</scope></dependency>
+        <dependency><groupId>io.urbanflow.quality</groupId><artifactId>shipment-service</artifactId><version>${project.version}</version><scope>test</scope></dependency>
+        <dependency><groupId>io.urbanflow.quality</groupId><artifactId>tracking-service</artifactId><version>${project.version}</version><scope>test</scope></dependency>
+        <dependency><groupId>io.urbanflow.quality</groupId><artifactId>routing-service</artifactId><version>${project.version}</version><scope>test</scope></dependency>
+        <dependency><groupId>io.urbanflow.quality</groupId><artifactId>notification-service</artifactId><version>${project.version}</version><scope>test</scope></dependency>
+        <dependency><groupId>io.urbanflow.quality</groupId><artifactId>warehouse-service</artifactId><version>${project.version}</version><scope>test</scope></dependency>
+        <dependency><groupId>io.rest-assured</groupId><artifactId>spring-mock-mvc</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-test</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>org.yaml</groupId><artifactId>snakeyaml</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter-params</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>org.assertj</groupId><artifactId>assertj-core</artifactId><scope>test</scope></dependency>
+    </dependencies>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId><artifactId>maven-surefire-plugin</artifactId>
+                <configuration><argLine>@{argLine} -javaagent:${settings.localRepository}/org/mockito/mockito-core/${mockito.version}/mockito-core-${mockito.version}.jar</argLine></configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

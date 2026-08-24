@@ -4,7 +4,7 @@
 
 **Status date:** 2026-08-24
 
-**Current milestone:** Phases 1-3 complete; Phase 4 in progress
+**Current milestone:** Phases 1-4 implemented; Phase 5 in progress
 
 ## Implemented modules
 
@@ -15,10 +15,25 @@ The Maven reactor and parent relationships are implemented for:
 - `test-core`, `test-data`, `test-orchestrator`.
 - UI, API, contract, component, integration, event, database, end-to-end, accessibility, visual, performance, and security suites.
 
-The Phase 4 behavior suites and later browser/non-functional suites still establish their executable
-build boundaries only. All six services contain independently executable Phase 2 vertical slices, and
-the reusable framework, test-data library, and orchestrator are implemented and verified. No
-placeholder classes or empty tests have been added.
+The API, component, integration, database, and consumer-contract suites are fully implemented. API,
+component, and contract suites are locally verified; the PostgreSQL suites compile and discover all
+tests but require a Docker runtime to execute. Later browser and non-functional suites still establish
+their executable build boundaries only. No placeholder classes or empty tests have been added.
+
+## Phase 4 service-boundary suites
+
+- 157 API checks cover all 33 published operations plus the identity HTTP adapter's success, failure,
+  validation, method, content-type, error-envelope, correlation, and trace behavior.
+- 28 WireMock component checks exercise the production notification gateway, acknowledgments,
+  failure codes, idempotency, UTF-8 content, and privacy minimization.
+- 20 Pact V4 consumer tests cover five owned consumer/provider pairs; a Failsafe compatibility gate
+  verifies every generated request method, path, and response status against provider OpenAPI.
+- 29 PostgreSQL migration, constraint, transaction, indexing, idempotency, outbox, audit, and cleanup
+  checks apply all seven owned migration sets to a real PostgreSQL Testcontainer.
+- 25 Spring Boot integration checks wire the production shipment application, Flyway, Spring Data,
+  aggregate lifecycle, history, idempotency, and outbox against PostgreSQL.
+- Service builds now produce a dependency-safe thin JAR and a separately classified `-exec.jar` for
+  executable deployment packaging.
 
 ## Phase 3 test platform
 
@@ -126,19 +141,20 @@ The application layer currently implements:
 | Product/domain unit and asset contract | 345 | Risk-driven, no fixed final quota |
 | Framework, data, and orchestrator unit | 125 | Risk-driven, no fixed final quota |
 | UI | 0 | 60 |
-| API | 0 | 100 |
-| Component | 0 | 25 |
-| Integration | 0 | 25 |
-| Contract | 0 | 20 |
+| API | 157 | 100 |
+| Component | 28 | 25 |
+| Integration | 25 implemented; Docker-blocked locally | 25 |
+| Contract | 20 | 20 |
 | Event/Kafka | 0 | 30 |
-| Database | 0 | 20 |
+| Database | 29 implemented; Docker-blocked locally | 20 |
 | End-to-end | 0 | 20 |
 | Accessibility | 0 | 15 |
 | Visual | 0 | 15 |
 | Performance scenarios | 0 | 10 |
 | Security | 0 | 20 |
 
-Zero is intentional at this milestone. Architecture-only tests would not verify product behavior and are not used to inflate coverage.
+Remaining zero-count suites are intentionally deferred to their owning phases. Architecture-only
+tests are not used to inflate the inventory.
 
 ## Verification performed
 
@@ -203,13 +219,22 @@ Zero is intentional at this milestone. Architecture-only tests would not verify 
 | Test Data quality profile | Passed: Spotless clean, Checkstyle 0, SpotBugs 0, JaCoCo 97.01% |
 | Test Orchestrator unit tests | Passed: 14 tests, 0 failures/errors/skips |
 | Test Orchestrator quality profile | Passed: Spotless clean, Checkstyle 0, SpotBugs 0, JaCoCo 79.39% |
+| API suite | Passed: 157 tests, 0 failures/errors/skips |
+| Component suite | Passed: 28 tests against a real WireMock server, 0 failures/errors/skips |
+| Contract suite | Passed: 20 Pact V4 consumer tests, 0 failures/errors/skips |
+| Pact/OpenAPI compatibility | Passed: all 20 generated interactions verified against provider contracts |
+| Phase 4 static gates | Passed: Spotless clean, Checkstyle 0 violations, SpotBugs 0 findings |
+| Phase 4 OpenAPI lint | Passed: shipment and tracking contracts valid, 0 warnings |
+| Database suite discovery | Passed: 29 tests compiled/discovered; skipped because Docker is unavailable |
+| Integration suite discovery | Passed: 25 tests compiled/discovered; skipped because Docker is unavailable |
 | Docker Compose validation | Not runnable: Docker is not installed |
 | Kubernetes/Helm validation | Not runnable: kubectl and Helm are not installed |
 
 ## Known limitations
 
 - Portal flows currently use isolated browser storage; service-backed gateway integration is still required before distributed end-to-end execution.
-- Shipment persistence/migration startup and API behavior have not been container-tested because Docker is unavailable on this machine.
+- The 29 database and 25 Spring Boot integration tests are ready but cannot execute on this machine
+  until a Docker-compatible runtime is available.
 - Kafka broker delivery, lease recovery, and PostgreSQL `SKIP LOCKED` behavior are unit-tested but not yet verified against real containers because Docker is unavailable.
 - Concurrent first-use races for the same idempotency key require the planned PostgreSQL integration test and conflict-normalization hardening.
 - Black-box tracking behavior still needs container-backed Kafka/PostgreSQL/Redis coverage; the
@@ -221,9 +246,8 @@ Zero is intentional at this milestone. Architecture-only tests would not verify 
 
 ## Next milestone
 
-Phase 4 implements the API, component, database, integration, and consumer-contract suites. Shared
-service authorization and service-backed portal adapters will be hardened alongside those black-box
-boundaries, followed by container-backed validation when a Docker runtime is available.
+Phase 5 implements the Selenium UI suite, cross-browser Grid execution, page/component objects,
+stable waits, authenticated browser journeys, parallel safety, and browser evidence collection.
 
 ## Exact commands
 
@@ -240,6 +264,11 @@ With JDK 25 on `JAVA_HOME`:
 .\mvnw.cmd -pl :notification-service,:shipment-service -am -Pquality clean verify
 .\mvnw.cmd -pl :warehouse-service -Pquality clean verify
 .\mvnw.cmd -pl :customer-portal,:courier-portal,:operations-dashboard -am -Pquality clean verify
+.\mvnw.cmd -pl :api-tests -am -Dgroups=api clean test
+.\mvnw.cmd -pl :component-tests -am -Dgroups=component clean test
+.\mvnw.cmd -pl :contract-tests -Dgroups=contract clean verify
+.\mvnw.cmd -pl :database-tests -Dgroups=database clean test
+.\mvnw.cmd -pl :integration-tests -am -Dgroups=integration clean test
 ```
 
 Portable validation toolchain used on this machine:
