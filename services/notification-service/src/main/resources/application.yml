@@ -1,0 +1,51 @@
+spring:
+  application:
+    name: notification-service
+  datasource:
+    url: ${NOTIFICATION_DATABASE_URL:jdbc:postgresql://localhost:5432/urbanflow_notification}
+    username: ${NOTIFICATION_DATABASE_USER}
+    password: ${NOTIFICATION_DATABASE_PASSWORD}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: false
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+
+urbanflow:
+  notification:
+    gateway-url: ${NOTIFICATION_GATEWAY_URL:https://communications.urbanflow.local}
+    gateway-timeout: ${NOTIFICATION_GATEWAY_TIMEOUT:PT10S}
+    maximum-attempts: ${NOTIFICATION_MAXIMUM_ATTEMPTS:5}
+    poll-delay: ${NOTIFICATION_POLL_DELAY:PT1S}
+    consumer:
+      topic: ${SHIPMENT_EVENTS_TOPIC:urbanflow.shipment.events.v1}
+      group-id: ${NOTIFICATION_CONSUMER_GROUP:notification-service-v1}
+
+server:
+  port: ${NOTIFICATION_SERVICE_PORT:8085}
+  shutdown: graceful
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+logging:
+  pattern:
+    console: >-
+      %d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} level=%level service=notification-service
+      correlationId=%X{correlationId:-none} traceId=%X{traceId:-none} logger=%logger{36} message=%msg%n

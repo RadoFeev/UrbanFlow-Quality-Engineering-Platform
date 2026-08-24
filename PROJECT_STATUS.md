@@ -15,7 +15,7 @@ The Maven reactor and parent relationships are implemented for:
 - `test-core`, `test-data`, `test-orchestrator`.
 - UI, API, contract, component, integration, event, database, end-to-end, accessibility, visual, performance, and security suites.
 
-Most modules currently establish the executable build boundary only. `identity-service`, `shipment-service`, `tracking-service`, and `routing-service` now contain independently executable Phase 2 vertical slices; no placeholder classes or empty tests have been added.
+Most test modules currently establish the executable build boundary only. `identity-service`, `shipment-service`, `tracking-service`, `routing-service`, and `notification-service` now contain independently executable Phase 2 vertical slices; no placeholder classes or empty tests have been added.
 
 ## Phase 2 progress
 
@@ -61,6 +61,15 @@ The routing service currently implements:
 - Kafka publication with shipment ordering keys, trace/correlation headers, broker acknowledgment, local overlap suppression, bounded batches, and capped retry.
 - PostgreSQL/Flyway schema, route/courier APIs, health/Prometheus endpoints, executable packaging, and OpenAPI 3.1 contract.
 
+The notification service currently implements:
+
+- Consumer-owned validation and idempotent processing of versioned shipment events.
+- Customer-scoped notification templates that deliberately exclude address and contact information.
+- PostgreSQL/Flyway delivery state with optimistic locking, bounded batches, and newest-first customer feeds.
+- HTTPS-only provider delivery with stable idempotency keys, acknowledgment validation, and strict timeouts.
+- Capped exponential retry, terminal dead-letter state, local overlap suppression, and delivery metrics.
+- Health/Prometheus endpoints, executable Spring Boot packaging, and a linted OpenAPI 3.1 contract.
+
 ## Completed Phase 1 work
 
 - Analyzed the initially empty workspace and initialized Git on `main`.
@@ -76,7 +85,7 @@ The routing service currently implements:
 
 | Suite | Implemented behavior tests | Required final target |
 |---|---:|---:|
-| Product/domain unit | 239 | Risk-driven, no fixed final quota |
+| Product/domain unit | 271 | Risk-driven, no fixed final quota |
 | UI | 0 | 60 |
 | API | 0 | 100 |
 | Component | 0 | 25 |
@@ -135,12 +144,17 @@ Zero is intentional at this milestone. Architecture-only tests would not verify 
 | Routing quality profile | Passed: Spotless clean, Checkstyle 0, SpotBugs 0 |
 | Routing JaCoCo line coverage | Passed: 84.19% against current 40% milestone gate |
 | Routing OpenAPI lint | Passed: Redocly CLI 2.47.0, 0 warnings |
+| Notification service compile/package | Passed: 21 production Java files, executable Spring Boot jar |
+| Notification unit tests | Passed: 32 tests, 0 failures/errors/skips |
+| Notification quality profile | Passed: Spotless clean, Checkstyle 0, SpotBugs 0 |
+| Notification JaCoCo line coverage | Passed: 73.23% against current 40% milestone gate |
+| Notification OpenAPI lint | Passed: Redocly CLI 2.47.0, 0 warnings |
 | Docker Compose validation | Not runnable: Docker is not installed |
 | Kubernetes/Helm validation | Not runnable: kubectl and Helm are not installed |
 
 ## Known limitations
 
-- Notification and warehouse services and all UI applications are not implemented yet.
+- Warehouse service and all UI applications are not implemented yet.
 - Shipment persistence/migration startup and API behavior have not been container-tested because Docker is unavailable on this machine.
 - Kafka broker delivery, lease recovery, and PostgreSQL `SKIP LOCKED` behavior are unit-tested but not yet verified against real containers because Docker is unavailable.
 - Concurrent first-use races for the same idempotency key require the planned PostgreSQL integration test and conflict-normalization hardening.
@@ -166,6 +180,7 @@ With JDK 25 on `JAVA_HOME`:
 .\mvnw.cmd -pl :shipment-service,:tracking-service -am -Pquality clean verify
 .\mvnw.cmd -pl :identity-service -Pquality clean verify
 .\mvnw.cmd -pl :routing-service -Pquality clean verify
+.\mvnw.cmd -pl :notification-service,:shipment-service -am -Pquality clean verify
 ```
 
 Portable validation toolchain used on this machine:
