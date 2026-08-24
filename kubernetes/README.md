@@ -1,5 +1,17 @@
-# Kubernetes Manifests
+# Kubernetes manifests
 
-This directory owns the raw reference manifests delivered in Milestone 8: namespace, service accounts/RBAC, ConfigMaps, secret templates without values, Deployments, Services, Jobs, CronJobs, storage, probes, resource requests/limits, and Selenium-node autoscaling.
+The raw reference deployment includes a restricted namespace, non-token-bearing runner account,
+environment ConfigMap, empty Secret template, Allure PVC, Selenium Hub, autoscaled Chrome/Firefox
+nodes, one-off Job, and nightly CronJob. Workloads define probes and bounded resources.
 
-Resources target a dedicated `urbanflow-quality` namespace. A server-side dry run, schema validation, and a kind or minikube readiness rehearsal are required before a manifest is considered implemented.
+```powershell
+kubectl apply -f kubernetes/namespace.yaml
+kubectl apply -f kubernetes/platform-config.yaml
+kubectl apply -f kubernetes/allure-storage.yaml
+kubectl apply -f kubernetes/selenium-grid.yaml
+kubectl apply -f kubernetes/test-execution.yaml
+kubectl -n urbanflow-quality wait --for=condition=available deployment/selenium-hub --timeout=180s
+```
+
+Replace the example test-runner image and populate `test-secrets-template` through a secret manager
+before creating Jobs. For kind or minikube, install metrics-server before validating the HPAs.

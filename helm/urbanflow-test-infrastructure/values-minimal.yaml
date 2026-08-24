@@ -1,0 +1,15 @@
+grid:
+  browsers:
+    chrome:
+      replicas: 1
+      minReplicas: 1
+      maxReplicas: 2
+    firefox:
+      enabled: false
+test:
+  suite: smoke
+  parallelism: 1
+schedule:
+  enabled: false
+reports:
+  size: 1Gi

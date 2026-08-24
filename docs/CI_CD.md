@@ -24,6 +24,16 @@
 
 Each job uses least-privilege permissions, concurrency cancellation for superseded branch work, wrapper validation, JDK 25, Maven cache keyed by POM/wrapper files, explicit timeout, environment capability check, deterministic run ID, and always-run artifact upload. Secrets are unavailable to untrusted fork code.
 
+All 15 named workflows are implemented under `.github/workflows`; a private reusable workflow keeps
+the JDK/cache/evidence pattern identical. UI uses a Chrome/Firefox and customer/operations-courier
+matrix. Integration and browser lanes may retry once only through the allowlisted infrastructure
+classifier, which retains both attempt logs.
+
+Recommended `main` branch protection requires the pull-request quality job plus API, contract,
+integration, accessibility, and all four UI matrix checks. Require the branch to be current, reject
+force pushes, require one review and CODEOWNERS review, dismiss stale approvals, and prevent
+administrators from bypassing critical security/contract gates.
+
 ## Sharding
 
 Tests receive stable shards from a historical-duration manifest. New tests use class-name hashing until enough history exists. A merge job checks that all discovered tests appear in exactly one shard and combines JUnit/Allure results without double-counting retries.

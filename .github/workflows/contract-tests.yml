@@ -1,0 +1,19 @@
+name: Contract tests
+on:
+  pull_request:
+    paths: ["services/**/openapi/**", "contract-tests/**", "pom.xml"]
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: contract-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  contract:
+    uses: ./.github/workflows/_maven-suite.yml
+    with:
+      command: ./mvnw -pl :contract-tests -Dgroups=contract clean verify
+      artifact-name: contract-tests
+      timeout-minutes: 25

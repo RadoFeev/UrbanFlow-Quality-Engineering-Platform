@@ -1,0 +1,20 @@
+name: Accessibility tests
+on:
+  pull_request:
+    paths: ["apps/**", "accessibility-tests/**", "test-core/**"]
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: accessibility-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  accessibility:
+    uses: ./.github/workflows/_maven-suite.yml
+    with:
+      command: ./mvnw -pl :accessibility-tests -am -Dgroups=accessibility clean test
+      artifact-name: accessibility-tests
+      timeout-minutes: 25
+      infrastructure-retry: true

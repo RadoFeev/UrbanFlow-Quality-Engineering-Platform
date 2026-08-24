@@ -1,0 +1,167 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: selenium-hub
+  namespace: urbanflow-quality
+  labels: { app.kubernetes.io/name: selenium-hub }
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app.kubernetes.io/name: selenium-hub }
+  template:
+    metadata:
+      labels: { app.kubernetes.io/name: selenium-hub }
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        seccompProfile: { type: RuntimeDefault }
+      containers:
+        - name: hub
+          image: selenium/hub:4.47.0
+          ports:
+            - { name: publish, containerPort: 4442 }
+            - { name: subscribe, containerPort: 4443 }
+            - { name: web, containerPort: 4444 }
+          readinessProbe:
+            httpGet: { path: /wd/hub/status, port: web }
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /wd/hub/status, port: web }
+            initialDelaySeconds: 30
+            periodSeconds: 20
+          resources:
+            requests: { cpu: 100m, memory: 256Mi }
+            limits: { cpu: "1", memory: 768Mi }
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: { drop: [ALL] }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: selenium-hub
+  namespace: urbanflow-quality
+spec:
+  selector: { app.kubernetes.io/name: selenium-hub }
+  ports:
+    - { name: publish, port: 4442, targetPort: publish }
+    - { name: subscribe, port: 4443, targetPort: subscribe }
+    - { name: web, port: 4444, targetPort: web }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: selenium-chrome
+  namespace: urbanflow-quality
+  labels: { app.kubernetes.io/name: selenium-chrome }
+spec:
+  replicas: 2
+  selector:
+    matchLabels: { app.kubernetes.io/name: selenium-chrome }
+  template:
+    metadata:
+      labels: { app.kubernetes.io/name: selenium-chrome }
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        seccompProfile: { type: RuntimeDefault }
+      containers:
+        - name: browser
+          image: selenium/node-chrome:4.47.0
+          env:
+            - { name: SE_EVENT_BUS_HOST, value: selenium-hub }
+            - { name: SE_EVENT_BUS_PUBLISH_PORT, value: "4442" }
+            - { name: SE_EVENT_BUS_SUBSCRIBE_PORT, value: "4443" }
+            - { name: SE_NODE_MAX_SESSIONS, value: "2" }
+          readinessProbe:
+            tcpSocket: { port: 5555 }
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket: { port: 5555 }
+            initialDelaySeconds: 30
+            periodSeconds: 20
+          resources:
+            requests: { cpu: 500m, memory: 768Mi }
+            limits: { cpu: "2", memory: 2Gi }
+          securityContext:
+            allowPrivilegeEscalation: false
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: selenium-chrome
+  namespace: urbanflow-quality
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: selenium-chrome
+  minReplicas: 1
+  maxReplicas: 8
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target: { type: Utilization, averageUtilization: 70 }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: selenium-firefox
+  namespace: urbanflow-quality
+  labels: { app.kubernetes.io/name: selenium-firefox }
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app.kubernetes.io/name: selenium-firefox }
+  template:
+    metadata:
+      labels: { app.kubernetes.io/name: selenium-firefox }
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        seccompProfile: { type: RuntimeDefault }
+      containers:
+        - name: browser
+          image: selenium/node-firefox:4.47.0
+          env:
+            - { name: SE_EVENT_BUS_HOST, value: selenium-hub }
+            - { name: SE_EVENT_BUS_PUBLISH_PORT, value: "4442" }
+            - { name: SE_EVENT_BUS_SUBSCRIBE_PORT, value: "4443" }
+            - { name: SE_NODE_MAX_SESSIONS, value: "2" }
+          readinessProbe:
+            tcpSocket: { port: 5555 }
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket: { port: 5555 }
+            initialDelaySeconds: 30
+            periodSeconds: 20
+          resources:
+            requests: { cpu: 500m, memory: 768Mi }
+            limits: { cpu: "2", memory: 2Gi }
+          securityContext:
+            allowPrivilegeEscalation: false
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: selenium-firefox
+  namespace: urbanflow-quality
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: selenium-firefox
+  minReplicas: 1
+  maxReplicas: 6
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target: { type: Utilization, averageUtilization: 70 }

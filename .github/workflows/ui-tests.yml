@@ -1,0 +1,27 @@
+name: UI tests
+on:
+  pull_request:
+    paths: ["apps/**", "ui-tests/**", "test-core/**"]
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ui-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  ui:
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chrome, firefox]
+        shard:
+          - { name: customer, pattern: "Customer*UiTest" }
+          - { name: operations-courier, pattern: "CourierPortalUiTest,OperationsDashboardUiTest" }
+    uses: ./.github/workflows/_maven-suite.yml
+    with:
+      command: ./mvnw -pl :ui-tests -am -Dgroups=ui -Dbrowser=${{ matrix.browser }} -Dtest='${{ matrix.shard.pattern }}' clean test
+      artifact-name: ui-${{ matrix.browser }}-${{ matrix.shard.name }}
+      timeout-minutes: 30
+      infrastructure-retry: true

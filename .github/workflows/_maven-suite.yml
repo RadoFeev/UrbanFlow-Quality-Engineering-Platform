@@ -1,0 +1,57 @@
+name: Reusable Maven suite
+
+on:
+  workflow_call:
+    inputs:
+      command:
+        required: true
+        type: string
+      artifact-name:
+        required: true
+        type: string
+      timeout-minutes:
+        required: false
+        type: number
+        default: 30
+      infrastructure-retry:
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: ${{ inputs.artifact-name }} quality gate
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ inputs.timeout-minutes }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: maven
+      - name: Validate Maven Wrapper
+        run: ./mvnw --version
+      - name: Execute suite
+        if: ${{ !inputs.infrastructure-retry }}
+        run: ${{ inputs.command }}
+      - name: Execute suite with bounded infrastructure retry
+        if: ${{ inputs.infrastructure-retry }}
+        run: bash scripts/ci/run-with-infra-retry.sh "${{ inputs.command }}"
+      - name: Upload test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.artifact-name }}-${{ github.run_attempt }}
+          if-no-files-found: warn
+          retention-days: 14
+          path: |
+            **/target/surefire-reports/**
+            **/target/failsafe-reports/**
+            **/target/allure-results/**
+            **/target/screenshots/**
+            **/target/visual-diffs/**
+            target/ci-attempts/**

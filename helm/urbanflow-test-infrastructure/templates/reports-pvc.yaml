@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "urbanflow.fullname" . }}-reports
+  namespace: {{ include "urbanflow.namespace" . }}
+  labels:
+    {{- include "urbanflow.labels" . | nindent 4 }}
+spec:
+  accessModes: [{{ .Values.reports.accessMode }}]
+  {{- if .Values.reports.storageClassName }}
+  storageClassName: {{ .Values.reports.storageClassName | quote }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.reports.size }}

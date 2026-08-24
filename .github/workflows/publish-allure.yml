@@ -1,0 +1,45 @@
+name: Publish Allure
+on:
+  workflow_run:
+    workflows: ["Nightly regression", "End-to-end tests"]
+    types: [completed]
+  workflow_dispatch:
+permissions:
+  actions: read
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: allure-pages
+  cancel-in-progress: false
+jobs:
+  publish:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - name: Download source workflow evidence
+        uses: actions/download-artifact@v5
+        with:
+          run-id: ${{ github.event.workflow_run.id || github.run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: artifacts
+      - name: Assemble Allure results
+        run: |
+          mkdir -p target/allure-results
+          find artifacts -type f -path '*allure-results*' -exec cp '{}' target/allure-results/ \;
+          test -n "$(find target/allure-results -type f -print -quit)"
+      - name: Generate report
+        run: |
+          npm install --global allure-commandline@2.34.1
+          allure generate target/allure-results --clean --output target/allure-report
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with: { path: target/allure-report }
+      - name: Deploy Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

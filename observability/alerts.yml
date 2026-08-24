@@ -1,0 +1,49 @@
+groups:
+  - name: urbanflow-platform
+    rules:
+      - alert: ServiceUnavailable
+        expr: up{job="urbanflow-services"} == 0
+        for: 2m
+        labels: { severity: critical }
+        annotations:
+          summary: UrbanFlow service scrape target is unavailable
+      - alert: ApiErrorRateHigh
+        expr: sum(rate(http_server_requests_seconds_count{status=~"5.."}[5m])) / clamp_min(sum(rate(http_server_requests_seconds_count[5m])), 1) > 0.02
+        for: 10m
+        labels: { severity: critical }
+        annotations:
+          summary: API 5xx rate is above two percent
+      - alert: ApiLatencyHigh
+        expr: histogram_quantile(0.95, sum by (le) (rate(http_server_requests_seconds_bucket[5m]))) > 0.8
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: API p95 latency exceeds 800 milliseconds
+      - alert: OutboxBacklogGrowing
+        expr: urbanflow_outbox_ready_backlog > 100
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: Shipment outbox backlog exceeds 100 events
+      - alert: KafkaDeadLetterGrowth
+        expr: increase(urbanflow_kafka_dlt_total[10m]) > 0
+        labels: { severity: critical }
+        annotations:
+          summary: Kafka dead-letter count increased
+      - alert: NotificationDeliveryExhausted
+        expr: increase(urbanflow_notification_delivery_total{result="exhausted"}[10m]) > 0
+        labels: { severity: warning }
+        annotations:
+          summary: Notification delivery exhausted its retry budget
+      - alert: DatabasePoolSaturation
+        expr: hikaricp_connections_active / clamp_min(hikaricp_connections_max, 1) > 0.85
+        for: 5m
+        labels: { severity: warning }
+        annotations:
+          summary: Database pool utilization is above 85 percent
+      - alert: RegressionPassRateLow
+        expr: urbanflow_test_passed_total / clamp_min(urbanflow_test_executed_total, 1) < 0.98
+        for: 15m
+        labels: { severity: warning }
+        annotations:
+          summary: Regression pass rate is below 98 percent

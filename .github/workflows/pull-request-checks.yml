@@ -1,0 +1,16 @@
+name: Pull request checks
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: pr-checks-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  quality:
+    uses: ./.github/workflows/_maven-suite.yml
+    with:
+      command: ./mvnw -Pquality -pl :test-core,:test-data,:component-tests -am clean verify
+      artifact-name: pull-request-checks
+      timeout-minutes: 35

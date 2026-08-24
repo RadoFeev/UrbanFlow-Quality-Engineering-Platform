@@ -1,0 +1,31 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    platform: urbanflow-quality
+    environment: local
+
+rule_files:
+  - /etc/prometheus/alerts.yml
+
+scrape_configs:
+  - job_name: urbanflow-services
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets:
+          - identity-service:8081
+          - shipment-service:8082
+          - tracking-service:8083
+          - routing-service:8084
+          - notification-service:8085
+          - warehouse-service:8086
+          - customer-portal:3001
+          - courier-portal:3002
+          - operations-dashboard:3003
+  - job_name: otel-collector
+    static_configs:
+      - targets: [otel-collector:9464]
+  - job_name: selenium-grid
+    metrics_path: /status
+    static_configs:
+      - targets: [selenium-hub:4444]

@@ -1,0 +1,392 @@
+name: urbanflow-quality
+
+x-runtime: &runtime
+  restart: unless-stopped
+  networks: [urbanflow]
+  security_opt: [no-new-privileges:true]
+  deploy:
+    resources:
+      limits: { cpus: "1.00", memory: 768M }
+      reservations: { cpus: "0.10", memory: 128M }
+
+x-jvm-health: &jvm-health
+  interval: 10s
+  timeout: 5s
+  retries: 12
+  start_period: 30s
+
+services:
+  postgres:
+    image: postgres:17.5-alpine
+    profiles: [minimal, integration, full]
+    restart: unless-stopped
+    networks: [urbanflow]
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?set POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+    ports: ["5432:5432"]
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U $$POSTGRES_USER -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    security_opt: [no-new-privileges:true]
+    deploy:
+      resources:
+        limits: { cpus: "1.50", memory: 1G }
+        reservations: { cpus: "0.20", memory: 256M }
+
+  redis:
+    image: redis:8.2.9-alpine
+    profiles: [minimal, integration, full]
+    restart: unless-stopped
+    networks: [urbanflow]
+    command: [redis-server, --appendonly, "yes", --save, "60", "1"]
+    ports: ["6379:6379"]
+    volumes: [redis-data:/data]
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    security_opt: [no-new-privileges:true]
+    deploy:
+      resources:
+        limits: { cpus: "0.50", memory: 384M }
+        reservations: { cpus: "0.05", memory: 64M }
+
+  kafka:
+    image: apache/kafka:4.1.1
+    profiles: [minimal, integration, full]
+    restart: unless-stopped
+    networks: [urbanflow]
+    ports: ["9092:9092"]
+    environment:
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: INTERNAL://:29092,CONTROLLER://:29093,EXTERNAL://:9092
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:29092,EXTERNAL://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:29093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+    volumes: [kafka-data:/var/lib/kafka/data]
+    healthcheck:
+      test: [CMD-SHELL, "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:29092 --list"]
+      interval: 10s
+      timeout: 10s
+      retries: 20
+    security_opt: [no-new-privileges:true]
+    deploy:
+      resources:
+        limits: { cpus: "1.50", memory: 1G }
+        reservations: { cpus: "0.20", memory: 256M }
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:v0.7.2
+    profiles: [integration, full]
+    <<: *runtime
+    ports: ["8090:8080"]
+    environment:
+      KAFKA_CLUSTERS_0_NAME: urbanflow-local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+      DYNAMIC_CONFIG_ENABLED: "false"
+    depends_on:
+      kafka: { condition: service_healthy }
+
+  pact-broker:
+    image: pactfoundation/pact-broker:2.142.0-pactbroker2.120.0
+    profiles: [integration, full]
+    <<: *runtime
+    ports: ["9292:9292"]
+    environment:
+      PACT_BROKER_DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/pact_broker
+      PACT_BROKER_PORT: 9292
+      PACT_BROKER_LOG_LEVEL: INFO
+      PACT_BROKER_BASE_URL: http://localhost:9292
+    depends_on:
+      postgres: { condition: service_healthy }
+    healthcheck:
+      test: [CMD-SHELL, "wget -qO- http://localhost:9292/diagnostic/status/heartbeat >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  identity-service:
+    profiles: [minimal, full]
+    <<: *runtime
+    image: ghcr.io/${IMAGE_REPOSITORY:-your-org}/urbanflow-identity:${IMAGE_TAG:-local}
+    build:
+      context: ..
+      dockerfile: infrastructure/docker/Dockerfile.jvm
+      args: { JAR_FILE: services/identity-service/target/identity-service-0.1.0-exec.jar }
+    ports: ["8081:8081"]
+    environment:
+      IDENTITY_DATABASE_URL: jdbc:postgresql://postgres:5432/urbanflow_identity
+      IDENTITY_DATABASE_USER: ${POSTGRES_USER:?set POSTGRES_USER}
+      IDENTITY_DATABASE_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      IDENTITY_SIGNING_SECRET: ${IDENTITY_SIGNING_SECRET:?set IDENTITY_SIGNING_SECRET}
+      IDENTITY_ALLOWED_ORIGINS: http://localhost:3001,http://localhost:3002,http://localhost:3003
+    depends_on:
+      postgres: { condition: service_healthy }
+    healthcheck:
+      <<: *jvm-health
+      test: [CMD-SHELL, "wget -qO- http://localhost:8081/actuator/health >/dev/null"]
+
+  shipment-service:
+    profiles: [minimal, full]
+    <<: *runtime
+    image: ghcr.io/${IMAGE_REPOSITORY:-your-org}/urbanflow-shipment:${IMAGE_TAG:-local}
+    build:
+      context: ..
+      dockerfile: infrastructure/docker/Dockerfile.jvm
+      args: { JAR_FILE: services/shipment-service/target/shipment-service-0.1.0-exec.jar }
+    ports: ["8082:8082"]
+    environment:
+      URBANFLOW_DB_URL: jdbc:postgresql://postgres:5432/urbanflow
+      URBANFLOW_DB_USERNAME: ${POSTGRES_USER:?set POSTGRES_USER}
+      URBANFLOW_DB_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      URBANFLOW_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+    depends_on:
+      postgres: { condition: service_healthy }
+      kafka: { condition: service_healthy }
+    healthcheck:
+      <<: *jvm-health
+      test: [CMD-SHELL, "wget -qO- http://localhost:8082/actuator/health >/dev/null"]
+
+  tracking-service:
+    profiles: [minimal, full]
+    <<: *runtime
+    image: ghcr.io/${IMAGE_REPOSITORY:-your-org}/urbanflow-tracking:${IMAGE_TAG:-local}
+    build:
+      context: ..
+      dockerfile: infrastructure/docker/Dockerfile.jvm
+      args: { JAR_FILE: services/tracking-service/target/tracking-service-0.1.0-exec.jar }
+    ports: ["8083:8083"]
+    environment:
+      URBANFLOW_TRACKING_DB_URL: jdbc:postgresql://postgres:5432/urbanflow_tracking
+      URBANFLOW_TRACKING_DB_USERNAME: ${POSTGRES_USER:?set POSTGRES_USER}
+      URBANFLOW_TRACKING_DB_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      URBANFLOW_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      URBANFLOW_REDIS_HOST: redis
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      kafka: { condition: service_healthy }
+    healthcheck:
+      <<: *jvm-health
+      test: [CMD-SHELL, "wget -qO- http://localhost:8083/actuator/health >/dev/null"]
+
+  routing-service:
+    profiles: [minimal, full]
+    <<: *runtime
+    image: ghcr.io/${IMAGE_REPOSITORY:-your-org}/urbanflow-routing:${IMAGE_TAG:-local}
+    build:
+      context: ..
+      dockerfile: infrastructure/docker/Dockerfile.jvm
+      args: { JAR_FILE: services/routing-service/target/routing-service-0.1.0-exec.jar }
+    ports: ["8084:8084"]
+    environment:
+      ROUTING_DATABASE_URL: jdbc:postgresql://postgres:5432/urbanflow_routing
+      ROUTING_DATABASE_USER: ${POSTGRES_USER:?set POSTGRES_USER}
+      ROUTING_DATABASE_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+    depends_on:
+      postgres: { condition: service_healthy }
+      kafka: { condition: service_healthy }
+    healthcheck:
+      <<: *jvm-health
+      test: [CMD-SHELL, "wget -qO- http://localhost:8084/actuator/health >/dev/null"]
+
+  notification-service:
+    profiles: [minimal, full]
+    <<: *runtime
+    image: ghcr.io/${IMAGE_REPOSITORY:-your-org}/urbanflow-notification:${IMAGE_TAG:-local}
+    build:
+      context: ..
+      dockerfile: infrastructure/docker/Dockerfile.jvm
+      args: { JAR_FILE: services/notification-service/target/notification-service-0.1.0-exec.jar }
+    ports: ["8085:8085"]
+    environment:
+      NOTIFICATION_DATABASE_URL: jdbc:postgresql://postgres:5432/urbanflow_notification
+      NOTIFICATION_DATABASE_USER: ${POSTGRES_USER:?set POSTGRES_USER}
+      NOTIFICATION_DATABASE_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      NOTIFICATION_GATEWAY_URL: https://example.test/notifications
+    depends_on:
+      postgres: { condition: service_healthy }
+      kafka: { condition: service_healthy }
+    healthcheck:
+      <<: *jvm-health
+      test: [CMD-SHELL, "wget -qO- http://localhost:8085/actuator/health >/dev/null"]
+
+  warehouse-service:
+    profiles: [minimal, full]
+    <<: *runtime
+    image: ghcr.io/${IMAGE_REPOSITORY:-your-org}/urbanflow-warehouse:${IMAGE_TAG:-local}
+    build:
+      context: ..
+      dockerfile: infrastructure/docker/Dockerfile.jvm
+      args: { JAR_FILE: services/warehouse-service/target/warehouse-service-0.1.0-exec.jar }
+    ports: ["8086:8086"]
+    environment:
+      WAREHOUSE_DATABASE_URL: jdbc:postgresql://postgres:5432/urbanflow_warehouse
+      WAREHOUSE_DATABASE_USER: ${POSTGRES_USER:?set POSTGRES_USER}
+      WAREHOUSE_DATABASE_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+    depends_on:
+      postgres: { condition: service_healthy }
+    healthcheck:
+      <<: *jvm-health
+      test: [CMD-SHELL, "wget -qO- http://localhost:8086/actuator/health >/dev/null"]
+
+  customer-portal:
+    profiles: [minimal, full]
+    <<: *runtime
+    image: ghcr.io/${IMAGE_REPOSITORY:-your-org}/urbanflow-customer-portal:${IMAGE_TAG:-local}
+    build:
+      context: ..
+      dockerfile: infrastructure/docker/Dockerfile.jvm
+      args: { JAR_FILE: apps/customer-portal/target/customer-portal-0.1.0-exec.jar }
+    ports: ["3001:3001"]
+    environment: { CUSTOMER_PORTAL_PORT: 3001 }
+    healthcheck:
+      <<: *jvm-health
+      test: [CMD-SHELL, "wget -qO- http://localhost:3001/actuator/health >/dev/null"]
+
+  courier-portal:
+    profiles: [minimal, full]
+    <<: *runtime
+    image: ghcr.io/${IMAGE_REPOSITORY:-your-org}/urbanflow-courier-portal:${IMAGE_TAG:-local}
+    build:
+      context: ..
+      dockerfile: infrastructure/docker/Dockerfile.jvm
+      args: { JAR_FILE: apps/courier-portal/target/courier-portal-0.1.0-exec.jar }
+    ports: ["3002:3002"]
+    environment: { COURIER_PORTAL_PORT: 3002 }
+    healthcheck:
+      <<: *jvm-health
+      test: [CMD-SHELL, "wget -qO- http://localhost:3002/actuator/health >/dev/null"]
+
+  operations-dashboard:
+    profiles: [minimal, full]
+    <<: *runtime
+    image: ghcr.io/${IMAGE_REPOSITORY:-your-org}/urbanflow-operations-dashboard:${IMAGE_TAG:-local}
+    build:
+      context: ..
+      dockerfile: infrastructure/docker/Dockerfile.jvm
+      args: { JAR_FILE: apps/operations-dashboard/target/operations-dashboard-0.1.0-exec.jar }
+    ports: ["3003:3003"]
+    environment: { OPERATIONS_DASHBOARD_PORT: 3003 }
+    healthcheck:
+      <<: *jvm-health
+      test: [CMD-SHELL, "wget -qO- http://localhost:3003/actuator/health >/dev/null"]
+
+  selenium-hub:
+    image: selenium/hub:4.47.0
+    profiles: [grid, full]
+    restart: unless-stopped
+    networks: [urbanflow]
+    ports: ["4442:4442", "4443:4443", "4444:4444"]
+    environment: { GRID_MAX_SESSION: 8, SE_SESSION_REQUEST_TIMEOUT: 300 }
+    healthcheck:
+      test: [CMD-SHELL, "wget -qO- http://localhost:4444/wd/hub/status >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+    deploy:
+      resources:
+        limits: { cpus: "1.00", memory: 768M }
+
+  chrome:
+    image: selenium/node-chrome:4.47.0
+    profiles: [grid, full]
+    restart: unless-stopped
+    networks: [urbanflow]
+    shm_size: 2gb
+    environment:
+      SE_EVENT_BUS_HOST: selenium-hub
+      SE_EVENT_BUS_PUBLISH_PORT: 4442
+      SE_EVENT_BUS_SUBSCRIBE_PORT: 4443
+      SE_NODE_MAX_SESSIONS: 4
+      SE_VNC_NO_PASSWORD: 1
+    depends_on:
+      selenium-hub: { condition: service_healthy }
+    deploy:
+      replicas: 2
+      resources:
+        limits: { cpus: "2.00", memory: 2G }
+
+  firefox:
+    image: selenium/node-firefox:4.47.0
+    profiles: [grid, full]
+    restart: unless-stopped
+    networks: [urbanflow]
+    shm_size: 2gb
+    environment:
+      SE_EVENT_BUS_HOST: selenium-hub
+      SE_EVENT_BUS_PUBLISH_PORT: 4442
+      SE_EVENT_BUS_SUBSCRIBE_PORT: 4443
+      SE_NODE_MAX_SESSIONS: 4
+      SE_VNC_NO_PASSWORD: 1
+    depends_on:
+      selenium-hub: { condition: service_healthy }
+    deploy:
+      replicas: 2
+      resources:
+        limits: { cpus: "2.00", memory: 2G }
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.141.0
+    profiles: [observability, full]
+    <<: *runtime
+    command: [--config=/etc/otelcol-contrib/config.yml]
+    ports: ["4317:4317", "4318:4318", "9464:9464"]
+    volumes: [../observability/otel-collector.yml:/etc/otelcol-contrib/config.yml:ro]
+
+  prometheus:
+    image: prom/prometheus:v3.7.3
+    profiles: [observability, full]
+    <<: *runtime
+    ports: ["9090:9090"]
+    command: [--config.file=/etc/prometheus/prometheus.yml, --storage.tsdb.retention.time=7d]
+    volumes:
+      - ../observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ../observability/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prometheus-data:/prometheus
+    depends_on: [otel-collector]
+
+  grafana:
+    image: grafana/grafana:12.3.0
+    profiles: [observability, full]
+    <<: *runtime
+    ports: ["3000:3000"]
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?set GRAFANA_ADMIN_PASSWORD}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ../observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ../observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on: [prometheus]
+
+networks:
+  urbanflow:
+    name: urbanflow-quality-network
+    driver: bridge
+    internal: false
+
+volumes:
+  postgres-data:
+  redis-data:
+  kafka-data:
+  prometheus-data:
+  grafana-data:

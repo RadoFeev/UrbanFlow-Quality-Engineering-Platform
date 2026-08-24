@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: test-runner
+  namespace: urbanflow-quality
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: test-config
+  namespace: urbanflow-quality
+data:
+  URBANFLOW_ENV: kubernetes
+  URBANFLOW_BROWSER: chrome
+  URBANFLOW_HEADLESS: "true"
+  URBANFLOW_PARALLELISM: "4"
+  URBANFLOW_REMOTE_URL: http://selenium-hub:4444
+  URBANFLOW_VIDEO: "false"
+  URBANFLOW_CLEANUP: "true"
+  URBANFLOW_REPORT_DIR: /reports
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: test-secrets-template
+  namespace: urbanflow-quality
+type: Opaque
+data: {}

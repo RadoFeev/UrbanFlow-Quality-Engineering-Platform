@@ -1,0 +1,10 @@
+UrbanFlow test infrastructure was rendered in namespace {{ include "urbanflow.namespace" . }}.
+
+Check Grid readiness:
+  kubectl -n {{ include "urbanflow.namespace" . }} get deployment,hpa,job,cronjob,pvc
+
+Forward the Grid console:
+  kubectl -n {{ include "urbanflow.namespace" . }} port-forward service/{{ include "urbanflow.fullname" . }}-selenium-hub 4444:4444
+
+Populate {{ include "urbanflow.secretName" . }} from a secret manager before executing suites that
+require credentials. The chart never ships secret values.

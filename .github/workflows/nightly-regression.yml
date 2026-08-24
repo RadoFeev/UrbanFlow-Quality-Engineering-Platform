@@ -1,0 +1,31 @@
+name: Nightly regression
+on:
+  schedule:
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: nightly-regression
+  cancel-in-progress: false
+jobs:
+  service-boundaries:
+    uses: ./.github/workflows/_maven-suite.yml
+    with:
+      command: ./mvnw -pl :api-tests,:component-tests,:contract-tests -am clean verify
+      artifact-name: nightly-service-boundaries
+      timeout-minutes: 45
+  distributed:
+    uses: ./.github/workflows/_maven-suite.yml
+    with:
+      command: ./mvnw -pl :integration-tests,:database-tests,:event-tests -am clean test
+      artifact-name: nightly-distributed
+      timeout-minutes: 50
+      infrastructure-retry: true
+  browser-and-quality:
+    uses: ./.github/workflows/_maven-suite.yml
+    with:
+      command: ./mvnw -pl :ui-tests,:accessibility-tests,:visual-tests -am clean test
+      artifact-name: nightly-browser-quality
+      timeout-minutes: 60
+      infrastructure-retry: true

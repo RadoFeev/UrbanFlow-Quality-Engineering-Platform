@@ -4,7 +4,7 @@
 
 **Status date:** 2026-08-24
 
-**Current milestone:** Phases 1-7 implemented; Phase 8 in progress
+**Current milestone:** Phases 1-8 implemented; Phase 9 final verification in progress
 
 ## Implemented modules
 
@@ -19,6 +19,25 @@ The API, component, integration, database, consumer-contract, UI, event, and E2E
 implemented. Local and browser-backed suites are verified; PostgreSQL, Kafka broker, and deployed
 journey checks compile and discover all tests but require their documented external runtime to
 execute. No placeholder classes or empty tests have been added.
+
+## Phase 8 delivery platform
+
+- One version-pinned Compose definition exposes 20 components through `minimal`, `integration`,
+  `grid`, `observability`, and `full` profiles with health dependencies, named volumes, an isolated
+  network, restart/resource policy, and environment-only secrets.
+- A non-root Java 25 runtime image packages all six services and three portals; release builds can tag
+  and publish every application image to GHCR.
+- All 15 requested GitHub Actions workflows are implemented with JDK/Maven caching, least privilege,
+  concurrency, timeouts, evidence retention, Chrome/Firefox UI sharding, scheduled/manual lanes,
+  controlled infrastructure retry, security scanning, releases, and Allure Pages publication.
+- Raw Kubernetes resources provide a restricted namespace, ConfigMap, empty Secret template, Allure
+  PVC, probed Selenium Deployments/Service, Chrome/Firefox HPAs, a one-off Job, and nightly CronJob.
+- The reusable Helm chart parameterizes images, resources, suite execution, Grid capacity,
+  autoscaling, storage, retention, scheduling, and external Secret references, with minimal values.
+- OpenTelemetry, Prometheus, eight alert rules, Grafana provisioning, and an eight-panel quality
+  dashboard are versioned and mounted by Compose.
+- 34 parser/inventory checks validate delivery YAML, the Grafana JSON model, workflow inventory,
+  Kubernetes resource kinds, and Helm resource coverage. PowerShell and Bash syntax gates pass.
 
 ## Phase 7 non-functional suites
 
@@ -285,6 +304,10 @@ inventory, and environment-dependent checks report explicit skips instead of sim
 | Phase 7 performance contracts | Passed: 10 tests, 0 failures/errors/skips |
 | Phase 7 security controls | Passed: 20 tests, 0 failures/errors/skips |
 | Phase 7 quality profile | Passed: Spotless clean, Checkstyle 0 violations, SpotBugs 0 findings |
+| Phase 8 YAML and inventory contracts | Passed: 34 tests, 0 failures/errors/skips |
+| Phase 8 Grafana dashboard JSON | Passed: parsed model with 8 panels |
+| Phase 8 script syntax | Passed: PowerShell parser and Bash `-n` |
+| Phase 8 quality profile | Passed: Spotless clean, Checkstyle 0 violations, SpotBugs 0 findings |
 | Portal JavaScript syntax after UI hardening | Passed: all three application scripts |
 | Docker Compose validation | Not runnable: Docker is not installed |
 | Kubernetes/Helm validation | Not runnable: kubectl and Helm are not installed |
@@ -300,14 +323,17 @@ inventory, and environment-dependent checks report explicit skips instead of sim
 - Concurrent first-use races for the same idempotency key require the planned PostgreSQL integration test and conflict-normalization hardening.
 - Black-box tracking is covered by deployed E2E journeys; a complete local stack still needs Docker.
 - Routing HTTP endpoints still require the planned shared bearer authorization adapter before portal integration; current route-domain and event boundaries are implemented and tested.
-- Docker, CI workflows, Kubernetes, Helm, and dashboards are scheduled for Milestone 8.
+- Docker, CI workflows, Kubernetes, Helm, and dashboards are implemented; runtime rehearsals remain
+  environment-dependent.
 - The ZAP passive baseline is implemented but cannot run on this machine without Docker.
+- Compose schema/startup, Kubernetes server dry-run, and Helm lint/template cannot run on this
+  machine because Docker, kubectl, and Helm are not installed. Parser and inventory gates pass.
 - The checked machine requires the portable JDK used during validation or a separately installed JDK 25.
 - Repository URLs and `CODEOWNERS` identities use safe example organization values until a real GitHub owner is assigned.
 
 ## Next milestone
 
-Phase 8 implements CI/CD, container packaging, Docker Compose, Kubernetes, Helm, and observability.
+Phase 9 completes cross-document traceability, repository-wide verification, and the operator guide.
 
 ## Exact commands
 
@@ -340,6 +366,11 @@ With JDK 25 on `JAVA_HOME`:
 .\mvnw.cmd -pl :performance-tests -Dgroups=performance test
 .\mvnw.cmd -pl :security-tests -Dgroups=security test
 k6 inspect performance-tests/k6/urbanflow.js
+.\scripts\check-prerequisites.ps1
+.\scripts\stack.ps1 -Action Validate -Profile full
+.\scripts\validate-repository.ps1
+docker compose -f infrastructure/compose.yml --profile full up -d --build --wait
+helm lint helm/urbanflow-test-infrastructure
 ```
 
 Portable validation toolchain used on this machine:

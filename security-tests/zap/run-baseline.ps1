@@ -12,6 +12,7 @@ if ($targetUri.Scheme -notin @("http", "https") -or $targetUri.Host -notin $allo
 $evidence = Join-Path $PSScriptRoot "..\target\zap"
 New-Item -ItemType Directory -Force -Path $evidence | Out-Null
 $resolvedEvidence = (Resolve-Path -LiteralPath $evidence).Path
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot "zap-baseline.conf") -Destination $resolvedEvidence -Force
 
 docker run --rm `
     --add-host host.docker.internal:host-gateway `

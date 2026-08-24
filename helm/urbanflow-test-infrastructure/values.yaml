@@ -1,0 +1,65 @@
+namespace:
+  create: true
+  name: urbanflow-quality
+
+images:
+  hub: selenium/hub:4.47.0
+  chrome: selenium/node-chrome:4.47.0
+  firefox: selenium/node-firefox:4.47.0
+  testRunner: ghcr.io/your-org/urbanflow-tests:0.1.0
+  pullPolicy: IfNotPresent
+
+grid:
+  hub:
+    resources:
+      requests: { cpu: 100m, memory: 256Mi }
+      limits: { cpu: "1", memory: 768Mi }
+  browsers:
+    chrome:
+      enabled: true
+      replicas: 2
+      minReplicas: 1
+      maxReplicas: 8
+      maxSessions: 2
+      resources:
+        requests: { cpu: 500m, memory: 768Mi }
+        limits: { cpu: "2", memory: 2Gi }
+    firefox:
+      enabled: true
+      replicas: 1
+      minReplicas: 1
+      maxReplicas: 6
+      maxSessions: 2
+      resources:
+        requests: { cpu: 500m, memory: 768Mi }
+        limits: { cpu: "2", memory: 2Gi }
+
+test:
+  enabled: true
+  suite: regression
+  browser: chrome
+  parallelism: 4
+  environment: kubernetes
+  retries: 0
+  resources:
+    requests: { cpu: 500m, memory: 512Mi }
+    limits: { cpu: "2", memory: 2Gi }
+
+schedule:
+  enabled: true
+  expression: "0 1 * * *"
+  concurrencyPolicy: Forbid
+
+reports:
+  storageClassName: ""
+  accessMode: ReadWriteOnce
+  size: 5Gi
+  retentionDays: 7
+
+secrets:
+  existingSecret: ""
+  createEmptyTemplate: true
+
+serviceAccount:
+  create: true
+  name: ""

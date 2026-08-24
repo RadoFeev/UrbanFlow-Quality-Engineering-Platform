@@ -1,0 +1,19 @@
+name: API tests
+on:
+  pull_request:
+    paths: ["services/**", "api-tests/**", "test-core/**", "pom.xml"]
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: api-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  api:
+    uses: ./.github/workflows/_maven-suite.yml
+    with:
+      command: ./mvnw -pl :api-tests -am -Dgroups=api clean test
+      artifact-name: api-tests
+      timeout-minutes: 25

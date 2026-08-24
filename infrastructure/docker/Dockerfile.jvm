@@ -1,0 +1,9 @@
+FROM eclipse-temurin:25.0.4_7-jre-alpine-3.21
+
+ARG JAR_FILE
+WORKDIR /app
+COPY ${JAR_FILE} /app/application.jar
+
+USER 10001:10001
+EXPOSE 8080
+ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75.0", "-XX:+ExitOnOutOfMemoryError", "-jar", "/app/application.jar"]

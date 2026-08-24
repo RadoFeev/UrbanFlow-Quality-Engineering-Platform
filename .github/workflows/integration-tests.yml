@@ -1,0 +1,20 @@
+name: Integration tests
+on:
+  pull_request:
+    paths: ["services/**", "integration-tests/**", "database-tests/**", "event-tests/**", "pom.xml"]
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: integration-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  integration:
+    uses: ./.github/workflows/_maven-suite.yml
+    with:
+      command: ./mvnw -pl :integration-tests,:database-tests,:event-tests -am clean test
+      artifact-name: integration-tests
+      timeout-minutes: 45
+      infrastructure-retry: true

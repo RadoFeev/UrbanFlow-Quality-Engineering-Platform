@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "urbanflow.fullname" . }}-config
+  namespace: {{ include "urbanflow.namespace" . }}
+  labels:
+    {{- include "urbanflow.labels" . | nindent 4 }}
+data:
+  URBANFLOW_ENV: {{ .Values.test.environment | quote }}
+  URBANFLOW_BROWSER: {{ .Values.test.browser | quote }}
+  URBANFLOW_HEADLESS: "true"
+  URBANFLOW_PARALLELISM: {{ .Values.test.parallelism | quote }}
+  URBANFLOW_REMOTE_URL: http://{{ include "urbanflow.fullname" . }}-selenium-hub:4444
+  URBANFLOW_REPORT_DIR: /reports
+{{- if and .Values.secrets.createEmptyTemplate (not .Values.secrets.existingSecret) }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ include "urbanflow.secretName" . }}
+  namespace: {{ include "urbanflow.namespace" . }}
+  labels:
+    {{- include "urbanflow.labels" . | nindent 4 }}
+type: Opaque
+data: {}
+{{- end }}

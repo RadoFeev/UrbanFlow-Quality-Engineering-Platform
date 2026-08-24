@@ -1,0 +1,95 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: urbanflow-test-run
+  namespace: urbanflow-quality
+  labels: { app.kubernetes.io/name: urbanflow-test-runner }
+spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels: { app.kubernetes.io/name: urbanflow-test-runner }
+    spec:
+      restartPolicy: Never
+      serviceAccountName: test-runner
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile: { type: RuntimeDefault }
+      containers:
+        - name: tests
+          image: ghcr.io/your-org/urbanflow-tests:0.1.0
+          args:
+            - --environment=kubernetes
+            - --suite=regression
+            - --browser=chrome
+            - --headless=true
+            - --parallelism=4
+            - --retries=0
+            - --remote-url=http://selenium-hub:4444
+            - --report-directory=/reports
+            - --execute=true
+          envFrom:
+            - configMapRef: { name: test-config }
+            - secretRef: { name: test-secrets-template, optional: true }
+          volumeMounts:
+            - { name: reports, mountPath: /reports }
+          resources:
+            requests: { cpu: 500m, memory: 512Mi }
+            limits: { cpu: "2", memory: 2Gi }
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: { drop: [ALL] }
+      volumes:
+        - name: reports
+          persistentVolumeClaim: { claimName: allure-results }
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: urbanflow-nightly-regression
+  namespace: urbanflow-quality
+spec:
+  schedule: "0 1 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 5
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      ttlSecondsAfterFinished: 172800
+      template:
+        metadata:
+          labels: { app.kubernetes.io/name: urbanflow-nightly-regression }
+        spec:
+          restartPolicy: Never
+          serviceAccountName: test-runner
+          automountServiceAccountToken: false
+          containers:
+            - name: tests
+              image: ghcr.io/your-org/urbanflow-tests:0.1.0
+              args:
+                - --environment=kubernetes
+                - --suite=regression
+                - --browser=chrome
+                - --headless=true
+                - --parallelism=8
+                - --retries=0
+                - --remote-url=http://selenium-hub:4444
+                - --report-directory=/reports
+                - --execute=true
+              envFrom:
+                - configMapRef: { name: test-config }
+                - secretRef: { name: test-secrets-template, optional: true }
+              volumeMounts:
+                - { name: reports, mountPath: /reports }
+              resources:
+                requests: { cpu: "1", memory: 1Gi }
+                limits: { cpu: "4", memory: 4Gi }
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities: { drop: [ALL] }
+          volumes:
+            - name: reports
+              persistentVolumeClaim: { claimName: allure-results }
