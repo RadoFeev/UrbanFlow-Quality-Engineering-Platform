@@ -1,0 +1,1 @@
+Synthetic unsupported proof type used only by automated browser validation.

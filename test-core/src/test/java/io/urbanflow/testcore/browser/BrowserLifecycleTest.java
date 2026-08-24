@@ -24,7 +24,14 @@ class BrowserLifecycleTest {
     ChromeOptions options =
         (ChromeOptions) new BrowserOptionsFactory().create(config("chrome", true));
     assertThat(arguments(options, "goog:chromeOptions"))
-        .contains("--headless=new", "--window-size=1440,1000");
+        .contains(
+            "--headless=new",
+            "--window-size=1440,1000",
+            "--disable-background-timer-throttling",
+            "--disable-backgrounding-occluded-windows",
+            "--disable-renderer-backgrounding");
+    assertThat(options.getCapability("goog:loggingPrefs")).isNotNull();
+    assertThat(options.getCapability("se:recordVideo")).isEqualTo(false);
   }
 
   @Test
@@ -40,6 +47,13 @@ class BrowserLifecycleTest {
   void createsHeadlessEdgeCapabilities() {
     EdgeOptions options = (EdgeOptions) new BrowserOptionsFactory().create(config("edge", true));
     assertThat(arguments(options, "ms:edgeOptions")).contains("--headless=new");
+  }
+
+  @Test
+  void enablesRemoteVideoCapabilityFromConfiguration() {
+    ChromeOptions options =
+        (ChromeOptions) new BrowserOptionsFactory().create(config("chrome", true, true));
+    assertThat(options.getCapability("se:recordVideo")).isEqualTo(true);
   }
 
   @Test
@@ -93,6 +107,10 @@ class BrowserLifecycleTest {
   }
 
   private static EnvironmentConfig config(String browser, boolean headless) {
+    return config(browser, headless, false);
+  }
+
+  private static EnvironmentConfig config(String browser, boolean headless, boolean videoEnabled) {
     URI local = URI.create("http://localhost:8080");
     return new EnvironmentConfig(
         "local",
@@ -110,7 +128,7 @@ class BrowserLifecycleTest {
         null,
         2,
         Duration.ofSeconds(10),
-        false,
+        videoEnabled,
         true);
   }
 

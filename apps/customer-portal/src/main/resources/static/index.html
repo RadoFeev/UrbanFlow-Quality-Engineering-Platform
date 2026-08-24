@@ -106,7 +106,7 @@
     </section>
 
     <section id="tracking" class="view" aria-labelledby="tracking-title">
-      <div class="tracking-search"><div><p class="eyebrow">Public tracking</p><h1 id="tracking-title">Follow a shipment</h1></div><form id="tracking-form"><label for="tracking-number">Tracking number</label><div class="inline"><input id="tracking-number" data-testid="tracking-number" pattern="UF-[A-Z0-9]{8}" required><button class="primary" data-testid="track-submit" type="submit">Track</button></div></form></div>
+      <div class="tracking-search"><div><p class="eyebrow">Public tracking</p><h1 id="tracking-title">Follow a shipment</h1></div><form id="tracking-form" novalidate><label for="tracking-number">Tracking number</label><div class="inline"><input id="tracking-number" data-testid="tracking-number" pattern="UF-[A-Z0-9]{8}" required><button class="primary" data-testid="track-submit" type="submit">Track</button></div></form></div>
       <p id="tracking-message" class="form-message" data-testid="tracking-message" role="alert"></p>
       <div id="tracking-result" class="timeline" data-testid="tracking-result" aria-live="polite"></div>
     </section>

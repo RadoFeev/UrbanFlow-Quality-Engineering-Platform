@@ -1,2 +1,39 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"><modelVersion>4.0.0</modelVersion><parent><groupId>io.urbanflow.quality</groupId><artifactId>urbanflow-quality-platform</artifactId><version>0.1.0</version></parent><artifactId>ui-tests</artifactId></project>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent><groupId>io.urbanflow.quality</groupId><artifactId>urbanflow-quality-platform</artifactId><version>0.1.0</version></parent>
+    <artifactId>ui-tests</artifactId>
+    <name>UrbanFlow Selenium UI Tests</name>
+    <properties>
+        <ui.parallelism>2</ui.parallelism>
+        <selenium.offline>true</selenium.offline>
+    </properties>
+    <dependencies>
+        <dependency><groupId>io.urbanflow.quality</groupId><artifactId>test-core</artifactId><version>${project.version}</version><scope>test</scope></dependency>
+        <dependency><groupId>io.urbanflow.quality</groupId><artifactId>test-data</artifactId><version>${project.version}</version><scope>test</scope></dependency>
+        <dependency><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter-engine</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter-params</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>org.assertj</groupId><artifactId>assertj-core</artifactId><scope>test</scope></dependency>
+    </dependencies>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId><artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <systemPropertyVariables>
+                        <workspace.root>${maven.multiModuleProjectDirectory}</workspace.root>
+                        <junit.jupiter.execution.parallel.enabled>true</junit.jupiter.execution.parallel.enabled>
+                        <junit.jupiter.execution.parallel.mode.default>concurrent</junit.jupiter.execution.parallel.mode.default>
+                        <junit.jupiter.execution.parallel.mode.classes.default>concurrent</junit.jupiter.execution.parallel.mode.classes.default>
+                        <junit.jupiter.execution.parallel.config.strategy>fixed</junit.jupiter.execution.parallel.config.strategy>
+                        <junit.jupiter.execution.parallel.config.fixed.parallelism>${ui.parallelism}</junit.jupiter.execution.parallel.config.fixed.parallelism>
+                        <junit.jupiter.execution.parallel.config.fixed.max-pool-size>${ui.parallelism}</junit.jupiter.execution.parallel.config.fixed.max-pool-size>
+                    </systemPropertyVariables>
+                    <environmentVariables><SE_OFFLINE>${selenium.offline}</SE_OFFLINE></environmentVariables>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

@@ -4,7 +4,7 @@
 
 **Status date:** 2026-08-24
 
-**Current milestone:** Phases 1-4 implemented; Phase 5 in progress
+**Current milestone:** Phases 1-5 implemented; Phase 6 in progress
 
 ## Implemented modules
 
@@ -15,10 +15,29 @@ The Maven reactor and parent relationships are implemented for:
 - `test-core`, `test-data`, `test-orchestrator`.
 - UI, API, contract, component, integration, event, database, end-to-end, accessibility, visual, performance, and security suites.
 
-The API, component, integration, database, and consumer-contract suites are fully implemented. API,
-component, and contract suites are locally verified; the PostgreSQL suites compile and discover all
-tests but require a Docker runtime to execute. Later browser and non-functional suites still establish
-their executable build boundaries only. No placeholder classes or empty tests have been added.
+The API, component, integration, database, consumer-contract, and UI suites are fully implemented.
+API, component, contract, and UI suites are locally verified; the PostgreSQL suites compile and
+discover all tests but require a Docker runtime to execute. Later event, E2E, and non-functional suites
+still establish their executable build boundaries only. No placeholder classes or empty tests have
+been added.
+
+## Phase 5 browser suite
+
+- 96 Selenium scenarios drive the real customer, courier, and operations portal assets through a
+  loopback HTTP fixture, stable locators, page objects, and reusable form/toast/pagination components.
+- Customer coverage includes registration, lockout, session expiry, reset privacy, shipment boundary
+  validation, tracking, cancellation, address changes, profile/address book, incidents, and XSS-safe
+  rendering.
+- Courier coverage includes route lifecycle, legal transitions, unsuccessful-attempt reasons,
+  delivery-proof MIME validation, offline queues, reconnect synchronization, filters, and logout.
+- Operations coverage includes authentication, RBAC, metrics, search/filter/sort/pagination/export,
+  optimistic conflicts, privileged cancellation, user roles, feature flags, network resources,
+  incidents, audit records, and logout.
+- JUnit parallelism and maximum pool size are both bounded; each invocation owns its driver, storage,
+  trace/correlation context, cleanup, and failure evidence.
+- The authentication smoke is verified in Chrome, Microsoft Edge, and Firefox. Selenium Manager runs
+  offline by default after an explicit one-time driver bootstrap; remote Grid and video capabilities
+  are supported through configuration.
 
 ## Phase 4 service-boundary suites
 
@@ -140,7 +159,7 @@ The application layer currently implements:
 |---|---:|---:|
 | Product/domain unit and asset contract | 345 | Risk-driven, no fixed final quota |
 | Framework, data, and orchestrator unit | 125 | Risk-driven, no fixed final quota |
-| UI | 0 | 60 |
+| UI | 96 | 60 |
 | API | 157 | 100 |
 | Component | 28 | 25 |
 | Integration | 25 implemented; Docker-blocked locally | 25 |
@@ -227,6 +246,11 @@ tests are not used to inflate the inventory.
 | Phase 4 OpenAPI lint | Passed: shipment and tracking contracts valid, 0 warnings |
 | Database suite discovery | Passed: 29 tests compiled/discovered; skipped because Docker is unavailable |
 | Integration suite discovery | Passed: 25 tests compiled/discovered; skipped because Docker is unavailable |
+| Phase 5 Chrome UI regression | Passed: 96 tests, 0 failures/errors/skips, four bounded browser workers |
+| Phase 5 Edge smoke | Passed: authenticated customer journey |
+| Phase 5 Firefox smoke | Passed: authenticated customer journey |
+| Phase 5 quality profile | Passed: Spotless clean, Checkstyle 0 violations, SpotBugs 0 findings |
+| Portal JavaScript syntax after UI hardening | Passed: all three application scripts |
 | Docker Compose validation | Not runnable: Docker is not installed |
 | Kubernetes/Helm validation | Not runnable: kubectl and Helm are not installed |
 
@@ -246,8 +270,8 @@ tests are not used to inflate the inventory.
 
 ## Next milestone
 
-Phase 5 implements the Selenium UI suite, cross-browser Grid execution, page/component objects,
-stable waits, authenticated browser journeys, parallel safety, and browser evidence collection.
+Phase 6 implements Kafka event validation and distributed end-to-end business flows with schema,
+ordering, idempotency, retry, dead-letter, trace, and eventual-consistency assertions.
 
 ## Exact commands
 
@@ -269,6 +293,9 @@ With JDK 25 on `JAVA_HOME`:
 .\mvnw.cmd -pl :contract-tests -Dgroups=contract clean verify
 .\mvnw.cmd -pl :database-tests -Dgroups=database clean test
 .\mvnw.cmd -pl :integration-tests -am -Dgroups=integration clean test
+.\mvnw.cmd -pl :ui-tests -am -Dgroups=ui -Dui.parallelism=4 test
+.\mvnw.cmd -pl :ui-tests -am -Dgroups=ui -Dbrowser=edge test
+.\mvnw.cmd -pl :ui-tests -am -Dgroups=ui -Dbrowser=firefox test
 ```
 
 Portable validation toolchain used on this machine:
