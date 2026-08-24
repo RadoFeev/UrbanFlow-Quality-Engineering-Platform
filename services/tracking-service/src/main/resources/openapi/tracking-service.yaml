@@ -1,0 +1,138 @@
+openapi: 3.1.0
+info:
+  title: UrbanFlow Tracking Service API
+  version: 0.1.0
+  description: Public event-projected shipment tracking timeline.
+  license:
+    name: MIT
+    identifier: MIT
+servers:
+  - url: https://{host}:{port}
+    variables:
+      host:
+        default: tracking.urbanflow.test
+      port:
+        default: '443'
+security: []
+paths:
+  /api/v1/tracking/{trackingNumber}:
+    get:
+      operationId: getTrackingTimeline
+      summary: Return an ordered public shipment timeline
+      parameters:
+        - name: trackingNumber
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^UF[0-9A-F]{18}$'
+        - name: X-Correlation-ID
+          in: header
+          required: false
+          schema:
+            type: string
+            maxLength: 64
+      responses:
+        '200':
+          description: Timeline found
+          headers:
+            X-Correlation-ID:
+              schema:
+                type: string
+            X-Trace-ID:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrackingTimeline'
+        '400':
+          description: Invalid tracking-number syntax
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '404':
+          description: Timeline not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+components:
+  schemas:
+    TrackingTimeline:
+      type: object
+      additionalProperties: false
+      required: [trackingNumber, currentStatus, events, correlationId, traceId]
+      properties:
+        trackingNumber:
+          type: string
+        currentStatus:
+          $ref: '#/components/schemas/TrackingStatus'
+        events:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/TrackingEvent'
+        correlationId:
+          type: string
+        traceId:
+          type: string
+    TrackingEvent:
+      type: object
+      additionalProperties: false
+      required: [eventId, status, version, occurredAt, correlationId, traceId]
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        status:
+          $ref: '#/components/schemas/TrackingStatus'
+        version:
+          type: integer
+          format: int64
+          minimum: 0
+        occurredAt:
+          type: string
+          format: date-time
+        correlationId:
+          type: string
+        traceId:
+          type: string
+    TrackingStatus:
+      type: string
+      enum:
+        - CREATED
+        - CONFIRMED
+        - COURIER_ASSIGNED
+        - PICKUP_IN_PROGRESS
+        - PICKED_UP
+        - AT_ORIGIN_HUB
+        - IN_TRANSIT
+        - AT_DESTINATION_HUB
+        - OUT_FOR_DELIVERY
+        - DELIVERY_ATTEMPTED
+        - DELIVERED
+        - CANCELLED
+        - RETURN_IN_PROGRESS
+        - RETURNED
+    ApiError:
+      type: object
+      additionalProperties: false
+      required: [code, message, status, path, timestamp, correlationId, traceId]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        status:
+          type: integer
+        path:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        correlationId:
+          type: string
+        traceId:
+          type: string

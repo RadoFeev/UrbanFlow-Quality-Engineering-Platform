@@ -75,7 +75,9 @@ public class OutboxEvent {
     event.aggregateVersion = shipment.version();
     event.eventType = eventType;
     event.schemaVersion = "1.0";
-    event.payload = buildPayload(shipment.id(), shipment.status(), shipment.version());
+    event.payload =
+        buildPayload(
+            shipment.id(), shipment.trackingNumber(), shipment.status(), shipment.version());
     event.correlationId = correlationId;
     event.traceId = traceId;
     event.occurredAt = occurredAt;
@@ -191,9 +193,10 @@ public class OutboxEvent {
     claimedBy = null;
   }
 
-  private static String buildPayload(UUID shipmentId, ShipmentStatus status, long version) {
-    return "{\"shipmentId\":\"%s\",\"status\":\"%s\",\"version\":%d}"
-        .formatted(shipmentId, status, version);
+  private static String buildPayload(
+      UUID shipmentId, String trackingNumber, ShipmentStatus status, long version) {
+    return "{\"shipmentId\":\"%s\",\"trackingNumber\":\"%s\",\"status\":\"%s\",\"version\":%d}"
+        .formatted(shipmentId, trackingNumber, status, version);
   }
 
   private void ensureUnpublished() {

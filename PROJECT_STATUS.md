@@ -15,7 +15,7 @@ The Maven reactor and parent relationships are implemented for:
 - `test-core`, `test-data`, `test-orchestrator`.
 - UI, API, contract, component, integration, event, database, end-to-end, accessibility, visual, performance, and security suites.
 
-Most modules currently establish the executable build boundary only. `shipment-service` now contains the first Phase 2 vertical slice; no placeholder classes or empty tests have been added.
+Most modules currently establish the executable build boundary only. `shipment-service` and `tracking-service` now contain the first event-driven Phase 2 vertical slices; no placeholder classes or empty tests have been added.
 
 ## Phase 2 progress
 
@@ -33,6 +33,15 @@ The shipment service currently implements:
 - At-least-once Kafka publication with aggregate ordering keys, stable versioned envelopes, broker acknowledgment, capped exponential retry, and result/duration metrics.
 - Stable error envelope plus validated/replaced correlation and W3C trace identifiers.
 
+The tracking service currently implements:
+
+- Consumer-owned validation of the versioned shipment event envelope and payload.
+- Kafka consumption with malformed-record and unsupported-schema failure classification.
+- Idempotent, monotonic PostgreSQL timeline projection keyed by event and aggregate version.
+- Redis cache-aside timeline reads with bounded TTL, event-driven invalidation, corrupt-value recovery, and database fallback.
+- Public `GET /api/v1/tracking/{trackingNumber}` API with no-store semantics, deterministic ordering, current status, and correlation/trace context.
+- Flyway schema, executable Spring Boot packaging, health/Prometheus endpoints, OpenAPI 3.1 contract, and resilient observability metrics.
+
 ## Completed Phase 1 work
 
 - Analyzed the initially empty workspace and initialized Git on `main`.
@@ -48,7 +57,7 @@ The shipment service currently implements:
 
 | Suite | Implemented behavior tests | Required final target |
 |---|---:|---:|
-| Product/domain unit | 76 | Risk-driven, no fixed final quota |
+| Product/domain unit | 112 | Risk-driven, no fixed final quota |
 | UI | 0 | 60 |
 | API | 0 | 100 |
 | Component | 0 | 25 |
@@ -78,6 +87,7 @@ Zero is intentional at this milestone. Architecture-only tests would not verify 
 | Post-slice full-reactor `mvn -Pquality clean verify` | Passed: 27/27 projects, 48 tests, all quality gates; 39.353 s |
 | Outbox/Kafka targeted `mvn -Pquality clean verify` | Passed: 76 tests, all quality gates; 51.606 s |
 | Post-outbox full-reactor `mvn -Pquality clean verify` | Passed: 27/27 projects, 76 tests, all quality gates; 1:14 min |
+| Shipment/tracking targeted `mvn -Pquality clean verify` | Passed: 112 tests, packaged jars, all quality gates; 1:26 min |
 | Effective dependency versions | Passed: JUnit 6.1.3, Selenium 4.47.0, REST Assured 6.0.1, Testcontainers 2.0.5, Jackson 3.2.2, OpenTelemetry 1.65.0 |
 | Effective messaging versions | Passed: Spring Kafka 4.1.1, Kafka Client 4.3.1 |
 | POM XML validation | Passed: 27 files |
@@ -91,23 +101,28 @@ Zero is intentional at this milestone. Architecture-only tests would not verify 
 | Shipment quality profile | Passed: Spotless clean, Checkstyle 0, SpotBugs 0 |
 | Shipment JaCoCo line coverage | Passed: 71.19% against current 40% milestone gate |
 | Shipment OpenAPI lint | Passed: Redocly CLI 2.47.0, 0 warnings |
+| Tracking service compile/package | Passed: 23 production Java files, executable Spring Boot jar |
+| Tracking unit tests | Passed: 36 tests, 0 failures/errors/skips |
+| Tracking quality profile | Passed: Spotless clean, Checkstyle 0, SpotBugs 0 |
+| Tracking JaCoCo line coverage | Passed: 90.57% against current 40% milestone gate |
+| Tracking OpenAPI lint | Passed: Redocly CLI 2.47.0, 0 warnings |
 | Docker Compose validation | Not runnable: Docker is not installed |
 | Kubernetes/Helm validation | Not runnable: kubectl and Helm are not installed |
 
 ## Known limitations
 
-- Identity, tracking, routing, notification, and warehouse services and all UI applications are not implemented yet.
+- Identity, routing, notification, and warehouse services and all UI applications are not implemented yet.
 - Shipment persistence/migration startup and API behavior have not been container-tested because Docker is unavailable on this machine.
 - Kafka broker delivery, lease recovery, and PostgreSQL `SKIP LOCKED` behavior are unit-tested but not yet verified against real containers because Docker is unavailable.
 - Concurrent first-use races for the same idempotency key require the planned PostgreSQL integration test and conflict-normalization hardening.
-- Test Core and behavior suites are not implemented yet.
+- Black-box tracking behavior still needs container-backed Kafka/PostgreSQL/Redis coverage; Test Core and the dedicated behavior suites are not implemented yet.
 - Docker, CI workflows, Kubernetes, Helm, and dashboards are scheduled for Milestone 8.
 - The checked machine requires the portable JDK used during validation or a separately installed JDK 25.
 - Repository URLs and `CODEOWNERS` identities use safe example organization values until a real GitHub owner is assigned.
 
 ## Next milestone
 
-Milestone 2 continues with PostgreSQL/Kafka container validation and API tests for the shipment slice, then tracking projection and Redis invalidation, shared service conventions, identity, routing, notification, warehouse, and minimum responsive portals.
+Milestone 2 continues with identity, routing, notification, warehouse, and minimum responsive portals, followed by container-backed validation when a Docker runtime is available.
 
 ## Exact commands
 
@@ -118,6 +133,7 @@ With JDK 25 on `JAVA_HOME`:
 .\mvnw.cmd -Pquality clean verify
 .\mvnw.cmd help:effective-pom -Doutput=target/effective-pom.xml
 .\mvnw.cmd -pl :shipment-service -am -Pquality clean verify
+.\mvnw.cmd -pl :shipment-service,:tracking-service -am -Pquality clean verify
 ```
 
 Portable validation toolchain used on this machine:

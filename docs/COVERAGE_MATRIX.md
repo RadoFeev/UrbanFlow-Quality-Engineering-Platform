@@ -11,8 +11,8 @@ This matrix is expanded with exact class names as suites are implemented. Curren
 | Idempotent writes | R-02 | Unit/API/DB/Event | shipment, api, database, event | `ShipmentApplicationServiceTest`, `ShipmentIdempotency*Test` | api-tests, integration-tests | Unit orchestration implemented; other levels planned |
 | Optimistic locking | R-07 | API/DB/UI | api, database, ui | `OptimisticLocking*Test` | integration-tests, ui-tests | Planned |
 | Transactional outbox | R-03 | Unit/DB/Integration/Event | shipment, database, integration, event | `OutboxEventTest`, `OutboxPublisherTest`, `OutboxStateServiceTest`, `OutboxPublication*Test` | integration-tests | Lease/retry/envelope unit behavior implemented; DB/Kafka levels planned |
-| Tracking ordering and projection | R-04, R-08 | Event/API/UI/E2E | event, api, ui, e2e | `TrackingTimeline*Test` | api-tests, e2e-tests | Planned |
-| Redis cache/session/rate limits | R-08 | Integration/API | integration, api | `Redis*Test` | integration-tests | Planned |
+| Tracking ordering and projection | R-04, R-08 | Unit/Event/API/UI/E2E | tracking, event, api, ui, e2e | `TrackingProjectionServiceTest`, `TrackingTimeline*Test` | api-tests, e2e-tests | Unit projection implemented; cross-boundary levels planned |
+| Redis cache/session/rate limits | R-08 | Unit/Integration/API | tracking, integration, api | `RedisTrackingTimelineCacheTest`, `Redis*Test` | integration-tests | Cache fallback/TTL unit behavior implemented; real Redis level planned |
 | Courier offline synchronization | R-01, R-10 | Component/UI/E2E | component, ui, e2e | `OfflineDeliverySync*Test` | ui-tests, e2e-tests | Planned |
 | Proof-of-delivery upload | R-06, R-17 | API/UI/Security | api, ui, security | `DeliveryProofUpload*Test` | ui-tests, security-scan | Planned |
 | Notification retry and DLT | R-09 | Component/Event | component, event | `NotificationRetry*Test` | integration-tests | Planned |

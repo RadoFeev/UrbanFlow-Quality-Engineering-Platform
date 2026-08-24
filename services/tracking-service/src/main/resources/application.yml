@@ -1,0 +1,63 @@
+spring:
+  application:
+    name: tracking-service
+  datasource:
+    url: ${URBANFLOW_TRACKING_DB_URL:jdbc:postgresql://localhost:5432/urbanflow_tracking}
+    username: ${URBANFLOW_TRACKING_DB_USERNAME}
+    password: ${URBANFLOW_TRACKING_DB_PASSWORD}
+    hikari:
+      maximum-pool-size: ${URBANFLOW_TRACKING_DB_POOL_SIZE:10}
+      connection-timeout: 3000
+  flyway:
+    enabled: true
+    validate-migration-naming: true
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  data:
+    redis:
+      host: ${URBANFLOW_REDIS_HOST:localhost}
+      port: ${URBANFLOW_REDIS_PORT:6379}
+      timeout: ${URBANFLOW_REDIS_TIMEOUT:1s}
+      connect-timeout: ${URBANFLOW_REDIS_CONNECT_TIMEOUT:1s}
+  kafka:
+    bootstrap-servers: ${URBANFLOW_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
+urbanflow:
+  tracking:
+    consumer:
+      enabled: ${URBANFLOW_TRACKING_CONSUMER_ENABLED:true}
+      topic: ${URBANFLOW_SHIPMENT_EVENTS_TOPIC:urbanflow.shipment.events.v1}
+      group-id: ${URBANFLOW_TRACKING_GROUP_ID:tracking-service-v1}
+    cache:
+      key-prefix: ${URBANFLOW_TRACKING_CACHE_PREFIX:tracking:timeline:}
+      time-to-live: ${URBANFLOW_TRACKING_CACHE_TTL:30s}
+
+server:
+  port: ${URBANFLOW_TRACKING_PORT:8083}
+  shutdown: graceful
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: when_authorized
+
+logging:
+  pattern:
+    level: "%5p [correlationId=%X{correlationId:-} traceId=%X{traceId:-}]"

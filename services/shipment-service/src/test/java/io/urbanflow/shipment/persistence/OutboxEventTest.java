@@ -24,6 +24,7 @@ class OutboxEventTest {
     assertThat(event.aggregateId()).isEqualTo(shipment().id());
     assertThat(event.schemaVersion()).isEqualTo("1.0");
     assertThat(event.payload()).contains("\"status\":\"CREATED\"");
+    assertThat(event.payload()).contains("\"trackingNumber\":\"UF1123456789ABCDEF01\"");
     assertThat(event.publicationAttempts()).isZero();
     assertThat(event.nextAttemptAt()).isEqualTo(OCCURRED_AT);
     assertThat(event.publishedAt()).isNull();

@@ -15,7 +15,7 @@
 | Accessibility | No critical axe violations on gated pages | axe/Allure report |
 | Report generation | JUnit XML and Allure results produced | Artifact check |
 
-During Phase 2 the first product vertical slice has a 40% JaCoCo line-coverage floor and currently exceeds it. The floor rises as API/component coverage arrives; generated models and configuration-only exclusions must be explicit and reviewed.
+During Phase 2 each implemented product vertical slice has a 40% JaCoCo line-coverage floor. Shipment currently has 71.19% and tracking 90.57% line coverage. The floor rises as API/component coverage arrives; generated models and configuration-only exclusions must be explicit and reviewed.
 
 An unavailable required gate fails closed. Waivers are time-boxed, risk-owned, linked to a defect, and cannot be embedded as permanent ignore rules without review.
 
