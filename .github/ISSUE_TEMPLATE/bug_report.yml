@@ -1,0 +1,50 @@
+name: Bug report
+description: Report a reproducible product, test, or infrastructure defect.
+title: "bug: "
+labels: ["bug", "triage"]
+body:
+  - type: dropdown
+    id: classification
+    attributes:
+      label: Classification
+      options:
+        - Product
+        - Test framework
+        - Test case
+        - Infrastructure
+        - Security
+        - Accessibility
+        - Performance
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Expected and actual behavior
+      description: Include the smallest observable difference.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Include build, environment, command, test ID, seed, and steps. Never paste secrets.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Add masked artifact links, correlation ID, trace ID, and relevant event IDs.
+  - type: input
+    id: risk
+    attributes:
+      label: Requirement or risk ID
+      placeholder: R-01
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      options: [Critical, High, Medium, Low]
+    validations:
+      required: true

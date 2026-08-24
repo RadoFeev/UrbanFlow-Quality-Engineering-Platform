@@ -1,0 +1,11 @@
+# Replace example handles with the actual GitHub teams when the repository is published.
+* @your-org/urbanflow-maintainers
+/test-core/ @your-org/quality-platform
+/test-data/ @your-org/quality-platform
+/contract-tests/ @your-org/quality-platform @your-org/service-owners
+/infrastructure/ @your-org/platform-engineering
+/kubernetes/ @your-org/platform-engineering
+/helm/ @your-org/platform-engineering
+/.github/ @your-org/quality-platform @your-org/platform-engineering
+/docs/SECURITY_TESTING.md @your-org/security
+/security-tests/ @your-org/security @your-org/quality-platform

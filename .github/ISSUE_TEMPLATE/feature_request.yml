@@ -1,0 +1,31 @@
+name: Feature request
+description: Propose a product or quality-platform capability.
+title: "feat: "
+labels: ["enhancement", "triage"]
+body:
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Desired outcome
+      description: Describe the user or engineering problem and measurable result.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope and alternatives
+      description: Include affected services, apps, contracts, data, and alternatives considered.
+    validations:
+      required: true
+  - type: textarea
+    id: quality
+    attributes:
+      label: Quality and acceptance criteria
+      description: Include functional, security, accessibility, performance, compatibility, and observability expectations.
+    validations:
+      required: true
+  - type: input
+    id: risk
+    attributes:
+      label: Related risk IDs
+      placeholder: R-02, R-15

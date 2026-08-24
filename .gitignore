@@ -1,0 +1,49 @@
+# Build output
+target/
+build/
+dist/
+allure-results/
+allure-report/
+
+# Runtime evidence
+artifacts/
+screenshots/
+videos/
+logs/
+visual-tests/actual/
+visual-tests/diff/
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+*.local.properties
+secrets/
+*.jks
+*.p12
+*.pem
+
+# IDE and OS metadata
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+.project
+.classpath
+.settings/
+.DS_Store
+Thumbs.db
+
+# Tool caches
+.mvn/timing.properties
+.k6/
+.scannerwork/
+.dependency-check-data/
+node_modules/
+coverage/
+
+# Local container and Kubernetes state
+.kind/
+.minikube/
+docker-data/
