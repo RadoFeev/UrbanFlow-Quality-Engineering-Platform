@@ -1,0 +1,209 @@
+openapi: 3.1.0
+info:
+  title: UrbanFlow Routing Service API
+  version: 1.0.0
+  description: Courier assignments and versioned delivery-route lifecycle.
+  license:
+    name: MIT
+    identifier: MIT
+servers:
+  - url: https://routing.urbanflow.local
+    description: Environment routing service
+security: []
+tags:
+  - name: Routes
+    description: Route reads and lifecycle commands
+  - name: Couriers
+    description: Courier assignment views
+paths:
+  /api/v1/routes/{routeId}:
+    get:
+      tags: [Routes]
+      summary: Read a delivery route
+      operationId: getRoute
+      parameters:
+        - $ref: '#/components/parameters/RouteId'
+      responses:
+        '200':
+          $ref: '#/components/responses/Route'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '404':
+          $ref: '#/components/responses/RouteNotFound'
+  /api/v1/couriers/{courierId}/assignments:
+    get:
+      tags: [Couriers]
+      summary: List courier assignments
+      operationId: listCourierAssignments
+      parameters:
+        - name: courierId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Stable route assignment list
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControl'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Route'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+  /api/v1/routes/{routeId}/start:
+    post:
+      tags: [Routes]
+      summary: Start a planned route
+      operationId: startRoute
+      parameters:
+        - $ref: '#/components/parameters/RouteId'
+        - $ref: '#/components/parameters/IfMatch'
+      responses:
+        '200':
+          $ref: '#/components/responses/Route'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '404':
+          $ref: '#/components/responses/RouteNotFound'
+        '409':
+          $ref: '#/components/responses/VersionConflict'
+        '428':
+          $ref: '#/components/responses/PreconditionRequired'
+  /api/v1/routes/{routeId}/complete:
+    post:
+      tags: [Routes]
+      summary: Complete a started route
+      operationId: completeRoute
+      parameters:
+        - $ref: '#/components/parameters/RouteId'
+        - $ref: '#/components/parameters/IfMatch'
+      responses:
+        '200':
+          $ref: '#/components/responses/Route'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '404':
+          $ref: '#/components/responses/RouteNotFound'
+        '409':
+          $ref: '#/components/responses/VersionConflict'
+        '428':
+          $ref: '#/components/responses/PreconditionRequired'
+components:
+  parameters:
+    RouteId:
+      name: routeId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    IfMatch:
+      name: If-Match
+      in: header
+      required: true
+      description: Strong route version entity tag such as `"v2"`.
+      schema:
+        type: string
+        pattern: '^"v[0-9]+"$'
+  headers:
+    ETag:
+      description: Strong optimistic route version.
+      schema:
+        type: string
+        pattern: '^"v[0-9]+"$'
+    CacheControl:
+      description: Operational route views are not stored by intermediaries.
+      schema:
+        type: string
+        const: no-store
+  responses:
+    Route:
+      description: Route state
+      headers:
+        ETag:
+          $ref: '#/components/headers/ETag'
+        Cache-Control:
+          $ref: '#/components/headers/CacheControl'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Route'
+    InvalidRequest:
+      description: Invalid identifier, entity tag, or lifecycle command
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+    RouteNotFound:
+      description: Route identifier does not exist
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+    VersionConflict:
+      description: Supplied route version is stale
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+    PreconditionRequired:
+      description: If-Match is required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+  schemas:
+    Route:
+      type: object
+      additionalProperties: false
+      required: [id, shipmentId, courierId, status, createdAt, version]
+      properties:
+        id:
+          type: string
+          format: uuid
+        shipmentId:
+          type: string
+          format: uuid
+        courierId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [PLANNED, STARTED, COMPLETED, CANCELLED]
+        createdAt:
+          type: string
+          format: date-time
+        startedAt:
+          type: [string, 'null']
+          format: date-time
+        completedAt:
+          type: [string, 'null']
+          format: date-time
+        version:
+          type: integer
+          format: int64
+          minimum: 0
+    ApiError:
+      type: object
+      additionalProperties: false
+      required: [code, message, status, path, timestamp]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        status:
+          type: integer
+          minimum: 400
+          maximum: 599
+        path:
+          type: string
+        timestamp:
+          type: string
+          format: date-time

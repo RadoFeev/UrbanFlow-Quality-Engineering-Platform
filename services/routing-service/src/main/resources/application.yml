@@ -1,0 +1,55 @@
+spring:
+  application:
+    name: routing-service
+  datasource:
+    url: ${ROUTING_DATABASE_URL:jdbc:postgresql://localhost:5432/urbanflow_routing}
+    username: ${ROUTING_DATABASE_USER}
+    password: ${ROUTING_DATABASE_PASSWORD}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: false
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+    producer:
+      acks: all
+      properties:
+        enable.idempotence: true
+
+urbanflow:
+  routing:
+    consumer:
+      topic: ${SHIPMENT_EVENTS_TOPIC:urbanflow.shipment.events.v1}
+      group-id: ${ROUTING_CONSUMER_GROUP:routing-service-v1}
+    outbox:
+      topic: ${ROUTING_EVENTS_TOPIC:urbanflow.routing.events.v1}
+      acknowledgment-timeout: ${ROUTING_KAFKA_ACK_TIMEOUT:PT10S}
+      poll-delay: ${ROUTING_OUTBOX_POLL_DELAY:PT1S}
+
+server:
+  port: ${ROUTING_SERVICE_PORT:8084}
+  shutdown: graceful
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+logging:
+  pattern:
+    console: >-
+      %d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} level=%level service=routing-service
+      correlationId=%X{correlationId:-none} traceId=%X{traceId:-none} logger=%logger{36} message=%msg%n

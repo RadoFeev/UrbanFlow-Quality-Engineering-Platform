@@ -14,6 +14,7 @@ This matrix is expanded with exact class names as suites are implemented. Curren
 | Tracking ordering and projection | R-04, R-08 | Unit/Event/API/UI/E2E | tracking, event, api, ui, e2e | `TrackingProjectionServiceTest`, `TrackingTimeline*Test` | api-tests, e2e-tests | Unit projection implemented; cross-boundary levels planned |
 | Redis cache/session/rate limits | R-08 | Unit/Integration/API | tracking, integration, api | `RedisTrackingTimelineCacheTest`, `Redis*Test` | integration-tests | Cache fallback/TTL unit behavior implemented; real Redis level planned |
 | Courier offline synchronization | R-01, R-10 | Component/UI/E2E | component, ui, e2e | `OfflineDeliverySync*Test` | ui-tests, e2e-tests | Planned |
+| Courier assignment and route capacity | R-01, R-02, R-07 | Unit/Event/API/E2E | routing, event, api, e2e | `RoutingAssignmentServiceTest`, `RouteLifecycleServiceTest`, `CourierAssignment*Test` | integration-tests, e2e-tests | Domain/event publication unit behavior implemented; cross-boundary levels planned |
 | Proof-of-delivery upload | R-06, R-17 | API/UI/Security | api, ui, security | `DeliveryProofUpload*Test` | ui-tests, security-scan | Planned |
 | Notification retry and DLT | R-09 | Component/Event | component, event | `NotificationRetry*Test` | integration-tests | Planned |
 | Consumer contracts | R-15 | Contract | contract | `*PactTest`, `*ProviderTest` | contract-tests | Planned |

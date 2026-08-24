@@ -14,6 +14,7 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.
 - Lease-safe transactional outbox publication with Spring Kafka, stable envelopes and ordering keys, broker acknowledgments, capped retry, bounded metrics, and 76 passing shipment unit cases.
 - Tracking-service Kafka projection with event/schema validation, monotonic idempotency, PostgreSQL timeline storage, resilient Redis cache-aside reads, public timeline API, and 36 passing unit cases.
 - Identity-service registration, bcrypt credentials, lockout, signed access tokens, rotating refresh sessions, single-use password reset, RBAC, optimistic role administration, and 80 passing unit cases.
+- Routing-service idempotent shipment consumption, least-loaded courier capacity assignment, versioned route lifecycle, privacy-safe transactional outbox, acknowledged Kafka publication/retry, and 47 passing unit cases.
 
 ## [0.1.0] - 2026-08-24
 
