@@ -27,7 +27,7 @@ Optimistic conflicts return HTTP 409 with a stable error code, current version, 
 
 ## Persistence and messaging consistency
 
-State changes and outbox records commit in one PostgreSQL transaction. An outbox publisher claims rows with `FOR UPDATE SKIP LOCKED`, publishes a stable event ID, and marks publication. Consumers persist processed event IDs with their state change. Duplicate events therefore become acknowledged no-ops. Exhausted retries route an enriched original envelope to a dead-letter topic.
+State changes and outbox records commit in one PostgreSQL transaction. Publisher workers claim ready rows with `FOR UPDATE SKIP LOCKED`, a process-unique owner, and an expiring lease. A complete batch is dispatched before bounded acknowledgment waits; acknowledged rows are then marked published. Failures release their lease with capped exponential backoff, and abandoned leases become reclaimable after a crash. This boundary is deliberately at-least-once, so consumers persist processed event IDs with their state change and duplicates become acknowledged no-ops. Exhausted consumer retries route an enriched original envelope to a dead-letter topic.
 
 ## HTTP conventions
 

@@ -21,6 +21,27 @@ spring:
           time_zone: UTC
         order_inserts: true
         order_updates: true
+  kafka:
+    bootstrap-servers: ${URBANFLOW_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      acks: all
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      properties:
+        enable.idempotence: true
+        max.in.flight.requests.per.connection: 5
+        delivery.timeout.ms: 15000
+
+urbanflow:
+  outbox:
+    enabled: ${URBANFLOW_OUTBOX_ENABLED:true}
+    topic: ${URBANFLOW_SHIPMENT_EVENTS_TOPIC:urbanflow.shipment.events.v1}
+    batch-size: ${URBANFLOW_OUTBOX_BATCH_SIZE:50}
+    poll-interval: ${URBANFLOW_OUTBOX_POLL_INTERVAL:1s}
+    claim-lease: ${URBANFLOW_OUTBOX_CLAIM_LEASE:30s}
+    publish-timeout: ${URBANFLOW_OUTBOX_PUBLISH_TIMEOUT:10s}
+    initial-retry-delay: ${URBANFLOW_OUTBOX_INITIAL_RETRY_DELAY:1s}
+    max-retry-delay: ${URBANFLOW_OUTBOX_MAX_RETRY_DELAY:5m}
 
 server:
   port: ${URBANFLOW_SHIPMENT_PORT:8082}

@@ -17,6 +17,7 @@ Services and test infrastructure export OTLP to the OpenTelemetry Collector. The
 - Suite and test execution duration percentiles.
 - API response-time p50/p95/p99 and error rate by endpoint.
 - Kafka consumer processing delay, lag, retry, and DLT counts.
+- Outbox publication success/failure count, duration, ready backlog, and oldest-ready age.
 - End-to-end duration grouped by business journey.
 
 ## Failure investigation
@@ -25,7 +26,7 @@ An E2E failure starts from the Allure test and trace ID, opens the distributed t
 
 ## Cardinality and privacy
 
-Metrics never use user IDs, shipment IDs, emails, tracking numbers, event IDs, or trace IDs as labels. High-cardinality identifiers belong in traces/logs. Payload bodies and authentication data are excluded from telemetry by default.
+Metrics never use user IDs, shipment IDs, emails, tracking numbers, event IDs, worker IDs, or trace IDs as labels. High-cardinality identifiers belong in traces/logs. Payload bodies and authentication data are excluded from telemetry by default. Outbox failure persistence and logs retain only the exception category, never broker messages or event payloads.
 
 ## SLO-oriented alerts
 

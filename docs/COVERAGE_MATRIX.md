@@ -10,7 +10,7 @@ This matrix is expanded with exact class names as suites are implemented. Curren
 | Shipment transition policy | R-01, R-07 | Unit/API/Event/E2E | shipment, api, event, e2e | `ShipmentTransition*Test` | pull-request-checks, e2e-tests | Unit implemented; other levels planned |
 | Idempotent writes | R-02 | Unit/API/DB/Event | shipment, api, database, event | `ShipmentApplicationServiceTest`, `ShipmentIdempotency*Test` | api-tests, integration-tests | Unit orchestration implemented; other levels planned |
 | Optimistic locking | R-07 | API/DB/UI | api, database, ui | `OptimisticLocking*Test` | integration-tests, ui-tests | Planned |
-| Transactional outbox | R-03 | DB/Integration/Event | database, integration, event | `OutboxPublication*Test` | integration-tests | Planned |
+| Transactional outbox | R-03 | Unit/DB/Integration/Event | shipment, database, integration, event | `OutboxEventTest`, `OutboxPublisherTest`, `OutboxStateServiceTest`, `OutboxPublication*Test` | integration-tests | Lease/retry/envelope unit behavior implemented; DB/Kafka levels planned |
 | Tracking ordering and projection | R-04, R-08 | Event/API/UI/E2E | event, api, ui, e2e | `TrackingTimeline*Test` | api-tests, e2e-tests | Planned |
 | Redis cache/session/rate limits | R-08 | Integration/API | integration, api | `Redis*Test` | integration-tests | Planned |
 | Courier offline synchronization | R-01, R-10 | Component/UI/E2E | component, ui, e2e | `OfflineDeliverySync*Test` | ui-tests, e2e-tests | Planned |

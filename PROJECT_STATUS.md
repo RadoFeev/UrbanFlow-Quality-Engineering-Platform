@@ -29,6 +29,8 @@ The shipment service currently implements:
 - Idempotent creation with a deterministic request fingerprint and original-result replay.
 - PostgreSQL/Flyway schema with constraints, indexes, soft-delete field, history, idempotency, and outbox tables.
 - Transactional status history and event outbox staging with correlation and trace identifiers.
+- Lease-based outbox claiming with PostgreSQL `FOR UPDATE SKIP LOCKED`, crash recovery, and local overlap protection.
+- At-least-once Kafka publication with aggregate ordering keys, stable versioned envelopes, broker acknowledgment, capped exponential retry, and result/duration metrics.
 - Stable error envelope plus validated/replaced correlation and W3C trace identifiers.
 
 ## Completed Phase 1 work
@@ -46,7 +48,7 @@ The shipment service currently implements:
 
 | Suite | Implemented behavior tests | Required final target |
 |---|---:|---:|
-| Product/domain unit | 48 | Risk-driven, no fixed final quota |
+| Product/domain unit | 76 | Risk-driven, no fixed final quota |
 | UI | 0 | 60 |
 | API | 0 | 100 |
 | Component | 0 | 25 |
@@ -74,16 +76,20 @@ Zero is intentional at this milestone. Architecture-only tests would not verify 
 | `mvn clean verify` | Passed: 27-project reactor, 21.448 s |
 | `mvn -Pquality clean verify` | Passed: Enforcer, Spotless, Checkstyle (0 violations), SpotBugs; 1:33 min |
 | Post-slice full-reactor `mvn -Pquality clean verify` | Passed: 27/27 projects, 48 tests, all quality gates; 39.353 s |
+| Outbox/Kafka targeted `mvn -Pquality clean verify` | Passed: 76 tests, all quality gates; 51.606 s |
+| Post-outbox full-reactor `mvn -Pquality clean verify` | Passed: 27/27 projects, 76 tests, all quality gates; 1:14 min |
 | Effective dependency versions | Passed: JUnit 6.1.3, Selenium 4.47.0, REST Assured 6.0.1, Testcontainers 2.0.5, Jackson 3.2.2, OpenTelemetry 1.65.0 |
+| Effective messaging versions | Passed: Spring Kafka 4.1.1, Kafka Client 4.3.1 |
 | POM XML validation | Passed: 27 files |
 | Governance YAML parse | Passed: 3 files |
+| Repository YAML parse | Passed: 5 files |
 | Internal Markdown links | Passed |
 | Forbidden-pattern and credential signature scan | Passed |
 | Git whitespace validation | Passed |
-| Shipment service compile/package | Passed: 40 production classes, executable Spring Boot jar |
-| Shipment unit tests | Passed: 48 tests, 0 failures/errors/skips |
+| Shipment service compile/package | Passed: 46 production Java files, executable Spring Boot jar |
+| Shipment unit tests | Passed: 76 tests, 0 failures/errors/skips |
 | Shipment quality profile | Passed: Spotless clean, Checkstyle 0, SpotBugs 0 |
-| Shipment JaCoCo line coverage | Passed: 61.80% against current 40% milestone gate |
+| Shipment JaCoCo line coverage | Passed: 71.19% against current 40% milestone gate |
 | Shipment OpenAPI lint | Passed: Redocly CLI 2.47.0, 0 warnings |
 | Docker Compose validation | Not runnable: Docker is not installed |
 | Kubernetes/Helm validation | Not runnable: kubectl and Helm are not installed |
@@ -92,6 +98,7 @@ Zero is intentional at this milestone. Architecture-only tests would not verify 
 
 - Identity, tracking, routing, notification, and warehouse services and all UI applications are not implemented yet.
 - Shipment persistence/migration startup and API behavior have not been container-tested because Docker is unavailable on this machine.
+- Kafka broker delivery, lease recovery, and PostgreSQL `SKIP LOCKED` behavior are unit-tested but not yet verified against real containers because Docker is unavailable.
 - Concurrent first-use races for the same idempotency key require the planned PostgreSQL integration test and conflict-normalization hardening.
 - Test Core and behavior suites are not implemented yet.
 - Docker, CI workflows, Kubernetes, Helm, and dashboards are scheduled for Milestone 8.
@@ -100,7 +107,7 @@ Zero is intentional at this milestone. Architecture-only tests would not verify 
 
 ## Next milestone
 
-Milestone 2 continues with PostgreSQL container validation and API tests for the shipment slice, outbox-to-Kafka publication, then shared service conventions, identity, tracking, routing, notification, warehouse, Redis-backed concerns, and minimum responsive portals.
+Milestone 2 continues with PostgreSQL/Kafka container validation and API tests for the shipment slice, then tracking projection and Redis invalidation, shared service conventions, identity, routing, notification, warehouse, and minimum responsive portals.
 
 ## Exact commands
 

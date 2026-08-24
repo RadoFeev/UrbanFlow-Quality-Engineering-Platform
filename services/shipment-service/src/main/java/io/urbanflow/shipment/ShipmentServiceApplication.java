@@ -2,8 +2,10 @@ package io.urbanflow.shipment;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 /** Starts the UrbanFlow shipment service. */
+@EnableScheduling
 @SpringBootApplication
 public class ShipmentServiceApplication {
 

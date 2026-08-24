@@ -10,7 +10,8 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.
 
 ### Added
 
-- Shipment-service vertical slice with lifecycle policy, optimistic locking, idempotent creation, PostgreSQL/Flyway schema, status history, transactional outbox staging, traceable HTTP API, OpenAPI 3.1 contract, and 48 passing unit cases.
+- Shipment-service vertical slice with lifecycle policy, optimistic locking, idempotent creation, PostgreSQL/Flyway schema, status history, traceable HTTP API, and OpenAPI 3.1 contract.
+- Lease-safe transactional outbox publication with Spring Kafka, stable envelopes and ordering keys, broker acknowledgments, capped retry, bounded metrics, and 76 passing shipment unit cases.
 
 ## [0.1.0] - 2026-08-24
 

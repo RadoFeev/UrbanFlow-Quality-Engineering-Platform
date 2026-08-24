@@ -7,6 +7,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import java.util.Objects;
 import java.util.UUID;
 
 /** Durable event staged in the same transaction as its shipment state change. */
@@ -43,6 +44,21 @@ public class OutboxEvent {
   @Column(name = "published_at")
   private Instant publishedAt;
 
+  @Column(name = "publication_attempts", nullable = false)
+  private int publicationAttempts;
+
+  @Column(name = "next_attempt_at", nullable = false)
+  private Instant nextAttemptAt;
+
+  @Column(name = "claimed_at")
+  private Instant claimedAt;
+
+  @Column(name = "claimed_by", length = 100)
+  private String claimedBy;
+
+  @Column(name = "last_error", length = 1000)
+  private String lastError;
+
   /** Constructor reserved for persistence materialization. */
   protected OutboxEvent() {}
 
@@ -63,6 +79,7 @@ public class OutboxEvent {
     event.correlationId = correlationId;
     event.traceId = traceId;
     event.occurredAt = occurredAt;
+    event.nextAttemptAt = occurredAt;
     return event;
   }
 
@@ -116,13 +133,87 @@ public class OutboxEvent {
     return publishedAt;
   }
 
-  /** Marks this event as published without changing its original envelope. */
-  public void markPublished(Instant publicationTime) {
-    publishedAt = publicationTime;
+  /** Returns the number of completed Kafka publication attempts. */
+  public int publicationAttempts() {
+    return publicationAttempts;
+  }
+
+  /** Returns the earliest time at which this event may be attempted again. */
+  public Instant nextAttemptAt() {
+    return nextAttemptAt;
+  }
+
+  /** Returns when the current publication lease was acquired. */
+  public Instant claimedAt() {
+    return claimedAt;
+  }
+
+  /** Returns the worker that owns the current publication lease. */
+  public String claimedBy() {
+    return claimedBy;
+  }
+
+  /** Returns the sanitized failure summary from the last failed attempt. */
+  public String lastError() {
+    return lastError;
+  }
+
+  /** Acquires or replaces an expired publication lease. */
+  public void claim(String workerId, Instant claimTime) {
+    ensureUnpublished();
+    claimedBy = requireText(workerId, "workerId", 100);
+    claimedAt = Objects.requireNonNull(claimTime, "claimTime must not be null");
+  }
+
+  /** Marks this event as published when the caller still owns its lease. */
+  public void markPublished(String workerId, Instant publicationTime) {
+    requireClaimedBy(workerId);
+    publishedAt = Objects.requireNonNull(publicationTime, "publicationTime must not be null");
+    publicationAttempts++;
+    claimedAt = null;
+    claimedBy = null;
+    lastError = null;
+  }
+
+  /** Releases a failed lease and schedules the next capped-backoff attempt. */
+  public void markFailed(
+      String workerId, Instant failureTime, Instant retryAt, String failureSummary) {
+    requireClaimedBy(workerId);
+    Instant failedAt = Objects.requireNonNull(failureTime, "failureTime must not be null");
+    Instant next = Objects.requireNonNull(retryAt, "retryAt must not be null");
+    if (next.isBefore(failedAt)) {
+      throw new IllegalArgumentException("retryAt must not precede failureTime");
+    }
+    publicationAttempts++;
+    nextAttemptAt = next;
+    lastError = requireText(failureSummary, "failureSummary", 1000);
+    claimedAt = null;
+    claimedBy = null;
   }
 
   private static String buildPayload(UUID shipmentId, ShipmentStatus status, long version) {
     return "{\"shipmentId\":\"%s\",\"status\":\"%s\",\"version\":%d}"
         .formatted(shipmentId, status, version);
+  }
+
+  private void ensureUnpublished() {
+    if (publishedAt != null) {
+      throw new IllegalStateException("Published outbox event cannot be claimed");
+    }
+  }
+
+  private void requireClaimedBy(String workerId) {
+    ensureUnpublished();
+    if (!Objects.equals(claimedBy, workerId) || claimedAt == null) {
+      throw new IllegalStateException("Outbox lease is not owned by worker");
+    }
+  }
+
+  private static String requireText(String value, String field, int maxLength) {
+    if (value == null || value.isBlank()) {
+      throw new IllegalArgumentException(field + " must not be blank");
+    }
+    String normalized = value.trim();
+    return normalized.length() <= maxLength ? normalized : normalized.substring(0, maxLength);
   }
 }
