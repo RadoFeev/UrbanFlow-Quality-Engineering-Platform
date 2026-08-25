@@ -254,7 +254,7 @@ services:
     build:
       context: ..
       dockerfile: infrastructure/docker/Dockerfile.jvm
-      args: { JAR_FILE: apps/customer-portal/target/customer-portal-0.1.0-exec.jar }
+      args: { JAR_FILE: apps/customer-portal/target/customer-portal-0.1.0.jar }
     ports: ["3001:3001"]
     environment: { CUSTOMER_PORTAL_PORT: 3001 }
     healthcheck:
@@ -268,7 +268,7 @@ services:
     build:
       context: ..
       dockerfile: infrastructure/docker/Dockerfile.jvm
-      args: { JAR_FILE: apps/courier-portal/target/courier-portal-0.1.0-exec.jar }
+      args: { JAR_FILE: apps/courier-portal/target/courier-portal-0.1.0.jar }
     ports: ["3002:3002"]
     environment: { COURIER_PORTAL_PORT: 3002 }
     healthcheck:
@@ -282,7 +282,7 @@ services:
     build:
       context: ..
       dockerfile: infrastructure/docker/Dockerfile.jvm
-      args: { JAR_FILE: apps/operations-dashboard/target/operations-dashboard-0.1.0-exec.jar }
+      args: { JAR_FILE: apps/operations-dashboard/target/operations-dashboard-0.1.0.jar }
     ports: ["3003:3003"]
     environment: { OPERATIONS_DASHBOARD_PORT: 3003 }
     healthcheck:

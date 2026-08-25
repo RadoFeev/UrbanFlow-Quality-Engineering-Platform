@@ -39,14 +39,20 @@ class PostgresPersistenceTest {
       List.of(
           "services/identity-service/src/main/resources/db/migration/"
               + "V1__create_identity_schema.sql",
+          "services/identity-service/src/main/resources/db/migration/"
+              + "V2__normalize_token_hash_column_types.sql",
           "services/shipment-service/src/main/resources/db/migration/"
               + "V1__create_shipment_schema.sql",
           "services/shipment-service/src/main/resources/db/migration/"
               + "V2__add_outbox_publication_leases.sql",
+          "services/shipment-service/src/main/resources/db/migration/"
+              + "V3__normalize_shipment_constraint_names.sql",
           "services/tracking-service/src/main/resources/db/migration/"
               + "V1__create_tracking_schema.sql",
           "services/routing-service/src/main/resources/db/migration/"
               + "V1__create_routing_schema.sql",
+          "services/routing-service/src/main/resources/db/migration/"
+              + "V2__normalize_trace_id_column_type.sql",
           "services/notification-service/src/main/resources/db/migration/"
               + "V1__create_notification_schema.sql",
           "services/warehouse-service/src/main/resources/db/migration/"

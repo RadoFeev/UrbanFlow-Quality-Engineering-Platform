@@ -9,6 +9,8 @@ import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 /** Durable event staged in the same transaction as its shipment state change. */
 @Entity
@@ -29,6 +31,7 @@ public class OutboxEvent {
   @Column(name = "schema_version", nullable = false, length = 16)
   private String schemaVersion;
 
+  @JdbcTypeCode(SqlTypes.JSON)
   @Column(name = "payload", nullable = false, columnDefinition = "jsonb")
   private String payload;
 
@@ -69,19 +72,35 @@ public class OutboxEvent {
       String correlationId,
       String traceId,
       Instant occurredAt) {
+    return shipmentEventWithPayload(
+        shipment,
+        eventType,
+        buildPayload(
+            shipment.id(),
+            shipment.customerId(),
+            shipment.trackingNumber(),
+            shipment.status(),
+            shipment.version()),
+        correlationId,
+        traceId,
+        occurredAt);
+  }
+
+  /** Creates a versioned shipment event with a caller-serialized specialized payload. */
+  public static OutboxEvent shipmentEventWithPayload(
+      Shipment shipment,
+      String eventType,
+      String payload,
+      String correlationId,
+      String traceId,
+      Instant occurredAt) {
     OutboxEvent event = new OutboxEvent();
     event.id = UUID.randomUUID();
     event.aggregateId = shipment.id();
     event.aggregateVersion = shipment.version();
     event.eventType = eventType;
     event.schemaVersion = "1.0";
-    event.payload =
-        buildPayload(
-            shipment.id(),
-            shipment.customerId(),
-            shipment.trackingNumber(),
-            shipment.status(),
-            shipment.version());
+    event.payload = requireText(payload, "payload", Integer.MAX_VALUE);
     event.correlationId = correlationId;
     event.traceId = traceId;
     event.occurredAt = occurredAt;

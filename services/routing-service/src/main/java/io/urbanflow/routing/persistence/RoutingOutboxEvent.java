@@ -7,6 +7,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.UUID;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 /** Transactional `CourierAssigned` event awaiting Kafka publication. */
 @Entity
@@ -21,6 +23,7 @@ public class RoutingOutboxEvent {
   @Column(name = "event_type", nullable = false, length = 80)
   private String eventType;
 
+  @JdbcTypeCode(SqlTypes.JSON)
   @Column(name = "payload", nullable = false, columnDefinition = "jsonb")
   private String payload;
 

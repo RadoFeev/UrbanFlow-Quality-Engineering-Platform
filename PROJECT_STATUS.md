@@ -16,9 +16,9 @@ The Maven reactor and parent relationships are implemented for:
 - UI, API, contract, component, integration, event, database, end-to-end, accessibility, visual, performance, and security suites.
 
 The API, component, integration, database, consumer-contract, UI, event, and E2E suites are fully
-implemented. Local and browser-backed suites are verified; PostgreSQL, Kafka broker, and deployed
-journey checks compile and discover all tests but require their documented external runtime to
-execute. No placeholder classes or empty tests have been added.
+implemented. Local, browser-backed, PostgreSQL Testcontainers, Kafka broker, Compose runtime, and
+deployed-journey checks are verified on this workstation. No placeholder classes or empty tests have
+been added.
 
 ## Phase 9 release verification
 
@@ -70,8 +70,8 @@ execute. No placeholder classes or empty tests have been added.
 
 - 47 local Kafka checks validate eleven event types, envelopes, headers, topic ownership, payloads,
   schema rejection, ordering, idempotency, retry, dead-letter handling, delay, and consumer restart.
-- One additional Testcontainers check performs an actual keyed Kafka publish/consume round trip when
-  Docker is available and is explicitly reported as skipped when it is not.
+- One additional Testcontainers check performs an actual keyed Kafka publish/consume round trip; it
+  passes against the local Docker Desktop engine.
 - 20 independent black-box E2E journeys register and authenticate unique customers, create and replay
   idempotent shipments, read the protected aggregate, and verify the public tracking projection.
 - Every E2E assertion operates on actual HTTP responses and covers security headers, trace and
@@ -105,9 +105,9 @@ execute. No placeholder classes or empty tests have been added.
   failure codes, idempotency, UTF-8 content, and privacy minimization.
 - 20 Pact V4 consumer tests cover five owned consumer/provider pairs; a Failsafe compatibility gate
   verifies every generated request method, path, and response status against provider OpenAPI.
-- 29 PostgreSQL migration, constraint, transaction, indexing, idempotency, outbox, audit, and cleanup
-  checks apply all seven owned migration sets to a real PostgreSQL Testcontainer.
-- 25 Spring Boot integration checks wire the production shipment application, Flyway, Spring Data,
+- 32 PostgreSQL migration, constraint, transaction, indexing, idempotency, outbox, audit, and cleanup
+  checks apply every owned migration in version order to a real PostgreSQL Testcontainer.
+- 36 Spring Boot integration checks wire the production shipment application, Flyway, Spring Data,
   aggregate lifecycle, history, idempotency, and outbox against PostgreSQL.
 - Service builds now produce a dependency-safe thin JAR and a separately classified `-exec.jar` for
   executable deployment packaging.
@@ -220,11 +220,11 @@ The application layer currently implements:
 | UI | 96 | 60 |
 | API | 157 | 100 |
 | Component | 28 | 25 |
-| Integration | 25 implemented; Docker-blocked locally | 25 |
+| Integration | 36 implemented and Docker-verified | 25 |
 | Contract | 20 | 20 |
-| Event/Kafka | 48 implemented; 47 local + 1 Docker-backed | 30 |
-| Database | 29 implemented; Docker-blocked locally | 20 |
-| End-to-end | 20 implemented; deployed-stack opt-in | 20 |
+| Event/Kafka | 48 implemented and Docker-verified | 30 |
+| Database | 32 implemented and Docker-verified | 20 |
+| End-to-end | 20 implemented and local-stack verified | 20 |
 | Accessibility | 15 | 15 |
 | Visual | 15 | 15 |
 | Performance scenarios | 10 | 10 |
@@ -303,14 +303,14 @@ inventory, and environment-dependent checks report explicit skips instead of sim
 | Pact/OpenAPI compatibility | Passed: all 20 generated interactions verified against provider contracts |
 | Phase 4 static gates | Passed: Spotless clean, Checkstyle 0 violations, SpotBugs 0 findings |
 | Phase 4 OpenAPI lint | Passed: shipment and tracking contracts valid, 0 warnings |
-| Database suite discovery | Passed: 29 tests compiled/discovered; skipped because Docker is unavailable |
-| Integration suite discovery | Passed: 25 tests compiled/discovered; skipped because Docker is unavailable |
+| Database Testcontainers suite | Passed: 32 tests against PostgreSQL 18.6, 0 failures/errors/skips |
+| Spring Boot integration suite | Passed: 36 tests against PostgreSQL 18.6, 0 failures/errors/skips |
 | Phase 5 Chrome UI regression | Passed: 96 tests, 0 failures/errors/skips, four bounded browser workers |
 | Phase 5 Edge smoke | Passed: authenticated customer journey |
 | Phase 5 Firefox smoke | Passed: authenticated customer journey |
 | Phase 5 quality profile | Passed: Spotless clean, Checkstyle 0 violations, SpotBugs 0 findings |
-| Phase 6 event suite | Passed: 47 executed, 1 Docker-aware skip, 0 failures/errors |
-| Phase 6 E2E discovery | Passed: 20 deployed journeys discovered and explicitly skipped locally |
+| Phase 6 event suite | Passed: 48 executed including Kafka broker round trip, 0 failures/errors/skips |
+| Phase 6 local-stack E2E | Passed: 20 deployed journeys, 0 failures/errors/skips |
 | Phase 6 quality profile | Passed: Spotless clean, Checkstyle 0 violations, SpotBugs 0 findings |
 | Phase 7 axe-core accessibility | Passed: 15 tests, 0 failures/errors/skips |
 | Phase 7 visual comparison | Passed: 15 committed baselines, 0 failures/errors/skips |
@@ -328,27 +328,19 @@ inventory, and environment-dependent checks report explicit skips instead of sim
 | Final repository static audit | Passed: 52 Markdown documents, 27 POMs, no credentials, forbidden patterns, unfinished markers, or duplicate source/config files |
 | OWASP Dependency-Check update | Correctly blocked before analysis without an NVD key; CI now requires the environment-backed `NVD_API_KEY` secret |
 | Docker Compose validation | Passed: full profile resolves with the ignored local `.env` |
+| Docker Compose minimal runtime | Passed: 12/12 containers healthy; all 9 application health endpoints returned HTTP 200 |
 | Kubernetes/Helm validation | Passed: kubectl 1.36.4, Helm lint 0 failures, 465 rendered template lines, and kind 0.32.0 installed |
 
 ## Known limitations
 
 - Portal UI tests use deterministic browser storage; the separate Phase 6 E2E suite exercises the
   real identity and shipment HTTP boundaries against an explicitly supplied deployed environment.
-- The 29 database and 25 Spring Boot integration tests are ready but cannot execute until Windows
-  restarts and Docker Desktop initializes its newly enabled WSL 2 engine.
-- Kafka broker round-trip and PostgreSQL `SKIP LOCKED` checks are implemented but cannot execute on
-  this machine until the same Docker Engine restart is complete.
 - Concurrent first-use conflict normalization for the same idempotency key remains a future
   PostgreSQL hardening opportunity beyond the implemented sequential replay and uniqueness checks.
-- Black-box tracking is covered by deployed E2E journeys; a complete local stack still needs the
-  post-restart Docker Engine initialization.
 - Routing HTTP endpoints do not yet share the identity service's bearer-token adapter; the current
   route-domain and event boundaries are implemented and tested independently.
-- Docker, CI workflows, Kubernetes, Helm, and dashboards are implemented; container runtime
-  rehearsal remains pending the required Windows restart.
-- The ZAP passive baseline is implemented and awaits the post-restart Docker Engine.
-- Compose full-profile resolution and Helm lint/template pass. Kubernetes server dry-run, kind
-  cluster creation, and container startup remain pending the WSL 2 restart.
+- The Compose minimal profile is runtime-verified. Grid, observability, full-profile, ZAP, and kind
+  cluster rehearsals remain separate opt-in checks because of their additional local resource cost.
 - JDK 25 is installed and configured as the current user's `JAVA_HOME`.
 - OWASP Dependency-Check 13.0.0 requires a valid NVD API key for a complete vulnerability-data
   update. CI fails closed when the `NVD_API_KEY` repository secret is absent.
@@ -356,7 +348,7 @@ inventory, and environment-dependent checks report explicit skips instead of sim
 
 ## Future improvements
 
-- Rehearse the full Compose and kind deployments after the required Windows restart.
+- Rehearse the resource-intensive full Compose and kind deployments when those profiles are needed.
 - Add the shared bearer-token adapter to routing HTTP boundaries.
 - Add a concurrent first-use PostgreSQL idempotency contention test and explicit loser normalization.
 - Replace example repository ownership values before public release.
@@ -386,7 +378,7 @@ With JDK 25 on `JAVA_HOME`:
 .\mvnw.cmd -pl :ui-tests -am -Dgroups=ui -Dbrowser=firefox test
 .\mvnw.cmd -pl :event-tests -am -Dgroups=event test
 .\mvnw.cmd -pl :e2e-tests -am -Dgroups=e2e test
-.\mvnw.cmd -pl :e2e-tests -am -Dgroups=e2e -De2e.enabled=true test
+.\mvnw.cmd -pl :e2e-tests -am -Dgroups=e2e '-De2e.enabled=true' test
 .\mvnw.cmd -pl :accessibility-tests -am -Dgroups=accessibility test
 .\mvnw.cmd -pl :visual-tests -am -Dgroups=visual test
 .\mvnw.cmd -pl :performance-tests -Dgroups=performance test
@@ -396,7 +388,7 @@ k6 inspect performance-tests/k6/urbanflow.js
 .\scripts\check-prerequisites.ps1
 .\scripts\stack.ps1 -Action Validate -Profile full
 .\scripts\validate-repository.ps1
-docker compose -f infrastructure/compose.yml --profile full up -d --build --wait
+docker compose --env-file .env -f infrastructure/compose.yml --profile full up -d --build --wait
 helm lint helm/urbanflow-test-infrastructure
 ```
 

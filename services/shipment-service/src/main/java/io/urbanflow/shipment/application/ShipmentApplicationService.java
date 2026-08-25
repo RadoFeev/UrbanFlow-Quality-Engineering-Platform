@@ -17,6 +17,8 @@ import java.time.Instant;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 /** Coordinates versioned shipment persistence, history, idempotency, and outbox writes. */
 @Service
@@ -29,6 +31,7 @@ public class ShipmentApplicationService {
   private final ShipmentTransitionPolicy transitionPolicy;
   private final TrackingNumberGenerator trackingNumberGenerator;
   private final Clock clock;
+  private final ObjectMapper objectMapper;
 
   /** Creates the application service with explicit persistence and domain collaborators. */
   public ShipmentApplicationService(
@@ -38,7 +41,8 @@ public class ShipmentApplicationService {
       OutboxEventRepository outboxRepository,
       ShipmentTransitionPolicy transitionPolicy,
       TrackingNumberGenerator trackingNumberGenerator,
-      Clock clock) {
+      Clock clock,
+      ObjectMapper objectMapper) {
     this.shipmentRepository = shipmentRepository;
     this.idempotencyRepository = idempotencyRepository;
     this.historyRepository = historyRepository;
@@ -46,6 +50,7 @@ public class ShipmentApplicationService {
     this.transitionPolicy = transitionPolicy;
     this.trackingNumberGenerator = trackingNumberGenerator;
     this.clock = clock;
+    this.objectMapper = objectMapper;
   }
 
   /** Creates a shipment once for a key and returns the original result on an identical retry. */
@@ -118,9 +123,10 @@ public class ShipmentApplicationService {
     shipment.changeDeliveryAddress(expectedVersion, newAddress, now);
     Shipment persisted = shipmentRepository.saveAndFlush(shipment);
     outboxRepository.save(
-        OutboxEvent.shipmentEvent(
+        OutboxEvent.shipmentEventWithPayload(
             persisted,
             "ShipmentDeliveryAddressChanged",
+            addressChangedPayload(persisted),
             traceContext.correlationId(),
             traceContext.traceId(),
             now));
@@ -180,4 +186,44 @@ public class ShipmentApplicationService {
       default -> "ShipmentStatusChanged";
     };
   }
+
+  private String addressChangedPayload(Shipment shipment) {
+    AddressSnapshot address = shipment.deliveryAddress();
+    try {
+      return objectMapper.writeValueAsString(
+          new DeliveryAddressChangedPayload(
+              shipment.id(),
+              shipment.customerId(),
+              shipment.trackingNumber(),
+              shipment.status(),
+              shipment.version(),
+              new DeliveryAddressPayload(
+                  address.contactName(),
+                  address.line1(),
+                  address.line2(),
+                  address.city(),
+                  address.postalCode(),
+                  address.countryCode(),
+                  address.phone())));
+    } catch (JacksonException exception) {
+      throw new IllegalStateException("Unable to serialize shipment address change", exception);
+    }
+  }
+
+  private record DeliveryAddressChangedPayload(
+      UUID shipmentId,
+      UUID customerId,
+      String trackingNumber,
+      ShipmentStatus status,
+      long version,
+      DeliveryAddressPayload deliveryAddress) {}
+
+  private record DeliveryAddressPayload(
+      String contactName,
+      String line1,
+      String line2,
+      String city,
+      String postalCode,
+      String countryCode,
+      String phone) {}
 }
