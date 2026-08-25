@@ -10,7 +10,12 @@ param(
 $ErrorActionPreference = "Stop"
 $workspace = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..")).Path
 $compose = Join-Path $workspace "infrastructure\compose.yml"
-$arguments = @("compose", "-f", $compose, "--profile", $Profile)
+$environment = Join-Path $workspace ".env"
+$arguments = @("compose")
+if (Test-Path -LiteralPath $environment) {
+    $arguments += @("--env-file", $environment)
+}
+$arguments += @("-f", $compose, "--profile", $Profile)
 
 switch ($Action) {
     "Validate" { & docker @arguments config --quiet; break }

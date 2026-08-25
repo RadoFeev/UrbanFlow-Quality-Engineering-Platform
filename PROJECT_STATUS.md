@@ -2,7 +2,7 @@
 
 **Version:** 0.1.0
 
-**Status date:** 2026-08-24
+**Status date:** 2026-08-25
 
 **Current milestone:** All nine phases implemented and release verification complete
 
@@ -327,35 +327,36 @@ inventory, and environment-dependent checks report explicit skips instead of sim
 | Unified Allure result set | Passed: 989 total, 914 passed, 75 explicit skips, 0 failed/broken |
 | Final repository static audit | Passed: 52 Markdown documents, 27 POMs, no credentials, forbidden patterns, unfinished markers, or duplicate source/config files |
 | OWASP Dependency-Check update | Correctly blocked before analysis without an NVD key; CI now requires the environment-backed `NVD_API_KEY` secret |
-| Docker Compose validation | Not runnable: Docker is not installed |
-| Kubernetes/Helm validation | Not runnable: kubectl and Helm are not installed |
+| Docker Compose validation | Passed: full profile resolves with the ignored local `.env` |
+| Kubernetes/Helm validation | Passed: kubectl 1.36.4, Helm lint 0 failures, 465 rendered template lines, and kind 0.32.0 installed |
 
 ## Known limitations
 
 - Portal UI tests use deterministic browser storage; the separate Phase 6 E2E suite exercises the
   real identity and shipment HTTP boundaries against an explicitly supplied deployed environment.
-- The 29 database and 25 Spring Boot integration tests are ready but cannot execute on this machine
-  until a Docker-compatible runtime is available.
+- The 29 database and 25 Spring Boot integration tests are ready but cannot execute until Windows
+  restarts and Docker Desktop initializes its newly enabled WSL 2 engine.
 - Kafka broker round-trip and PostgreSQL `SKIP LOCKED` checks are implemented but cannot execute on
-  this machine because Docker is unavailable.
+  this machine until the same Docker Engine restart is complete.
 - Concurrent first-use conflict normalization for the same idempotency key remains a future
   PostgreSQL hardening opportunity beyond the implemented sequential replay and uniqueness checks.
-- Black-box tracking is covered by deployed E2E journeys; a complete local stack still needs Docker.
+- Black-box tracking is covered by deployed E2E journeys; a complete local stack still needs the
+  post-restart Docker Engine initialization.
 - Routing HTTP endpoints do not yet share the identity service's bearer-token adapter; the current
   route-domain and event boundaries are implemented and tested independently.
-- Docker, CI workflows, Kubernetes, Helm, and dashboards are implemented; runtime rehearsals remain
-  environment-dependent.
-- The ZAP passive baseline is implemented but cannot run on this machine without Docker.
-- Compose schema/startup, Kubernetes server dry-run, and Helm lint/template cannot run on this
-  machine because Docker, kubectl, and Helm are not installed. Parser and inventory gates pass.
-- The checked machine requires the portable JDK used during validation or a separately installed JDK 25.
+- Docker, CI workflows, Kubernetes, Helm, and dashboards are implemented; container runtime
+  rehearsal remains pending the required Windows restart.
+- The ZAP passive baseline is implemented and awaits the post-restart Docker Engine.
+- Compose full-profile resolution and Helm lint/template pass. Kubernetes server dry-run, kind
+  cluster creation, and container startup remain pending the WSL 2 restart.
+- JDK 25 is installed and configured as the current user's `JAVA_HOME`.
 - OWASP Dependency-Check 13.0.0 requires a valid NVD API key for a complete vulnerability-data
   update. CI fails closed when the `NVD_API_KEY` repository secret is absent.
 - Repository URLs and `CODEOWNERS` identities use safe example organization values until a real GitHub owner is assigned.
 
 ## Future improvements
 
-- Rehearse the full Compose, Kubernetes, and Helm deployments on a Docker-capable workstation.
+- Rehearse the full Compose and kind deployments after the required Windows restart.
 - Add the shared bearer-token adapter to routing HTTP boundaries.
 - Add a concurrent first-use PostgreSQL idempotency contention test and explicit loser normalization.
 - Replace example repository ownership values before public release.
