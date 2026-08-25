@@ -12,7 +12,7 @@ jobs:
   smoke:
     uses: ./.github/workflows/_maven-suite.yml
     with:
-      command: ./mvnw -pl :ui-tests -am -Dgroups=ui -Dtest=CustomerAuthenticationUiTest clean test
+      command: ./mvnw -pl :ui-tests -am -Dgroups=ui -Dtest=CustomerAuthenticationUiTest -Dsurefire.failIfNoSpecifiedTests=false clean test
       artifact-name: smoke-tests
       timeout-minutes: 20
       infrastructure-retry: true

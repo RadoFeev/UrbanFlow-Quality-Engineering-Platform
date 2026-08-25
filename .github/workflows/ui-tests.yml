@@ -21,7 +21,7 @@ jobs:
           - { name: operations-courier, pattern: "CourierPortalUiTest,OperationsDashboardUiTest" }
     uses: ./.github/workflows/_maven-suite.yml
     with:
-      command: ./mvnw -pl :ui-tests -am -Dgroups=ui -Dbrowser=${{ matrix.browser }} -Dtest='${{ matrix.shard.pattern }}' clean test
+      command: ./mvnw -pl :ui-tests -am -Dgroups=ui -Dbrowser=${{ matrix.browser }} -Dtest='${{ matrix.shard.pattern }}' -Dsurefire.failIfNoSpecifiedTests=false clean test
       artifact-name: ui-${{ matrix.browser }}-${{ matrix.shard.name }}
       timeout-minutes: 30
       infrastructure-retry: true
