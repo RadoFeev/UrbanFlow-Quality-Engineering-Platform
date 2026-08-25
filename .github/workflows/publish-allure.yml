@@ -37,7 +37,7 @@ jobs:
         run: |
           npm install --global allure-commandline@2.34.1
           allure generate target/allure-results --clean --output target/allure-report
-      - uses: actions/configure-pages@v5
+      - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v3
         with: { path: target/allure-report }
       - name: Deploy Pages
