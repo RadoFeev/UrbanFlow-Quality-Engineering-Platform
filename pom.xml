@@ -79,7 +79,7 @@
         <dependency-check.version>13.0.0</dependency-check.version>
         <versions-plugin.version>2.21.0</versions-plugin.version>
         <google-java-format.version>1.36.1</google-java-format.version>
-        <checkstyle.version>14.0.0</checkstyle.version>
+        <checkstyle.version>14.1.0</checkstyle.version>
         <clean-plugin.version>3.5.0</clean-plugin.version>
         <resources-plugin.version>3.5.0</resources-plugin.version>
         <jar-plugin.version>3.5.1</jar-plugin.version>
