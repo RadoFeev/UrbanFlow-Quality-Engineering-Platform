@@ -23,7 +23,7 @@ jobs:
         run: ./mvnw versions:display-dependency-updates versions:display-plugin-updates -DoutputFile=target/dependency-updates.txt
       - name: Validate current dependency graph
         run: ./mvnw -DskipTests verify
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: dependency-update-report
           retention-days: 30

@@ -43,7 +43,7 @@ jobs:
         run: bash scripts/ci/run-with-infra-retry.sh "${{ inputs.command }}"
       - name: Upload test evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ inputs.artifact-name }}-${{ github.run_attempt }}
           if-no-files-found: warn
